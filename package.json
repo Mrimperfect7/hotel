@@ -23,7 +23,7 @@
     "build:web": "npm run build -w @gsv/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "start:api": "npm run start -w @gsv/api",
-    "vercel:build": "npm run build:packages && npm run db:generate -w @gsv/database && npm run build:api"
+    "vercel:build": "npm run db:generate -w @gsv/database && npm run build:packages && npm run build:api"
   },
   "dependencies": {
     "caniuse-lite": "^1.0.30001667"
