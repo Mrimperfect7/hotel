@@ -37,6 +37,11 @@ app.use('/api/admin', adminRouter);
 // Uploaded images (dev local storage; prod uses Cloudinary CDN).
 app.use('/uploads', express.static(path.resolve('uploads'), { fallthrough: true, maxAge: '7d' }));
 
+// Root landing redirects to docs.
+app.get('/', (_req, res) => {
+  res.redirect('/docs');
+});
+
 // Lightweight API docs page.
 app.get('/docs', (_req, res) => {
   res.type('html').send(`<!doctype html>
