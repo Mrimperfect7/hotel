@@ -3,13 +3,12 @@
  *
  *   EXPO_PUBLIC_API_ORIGIN=https://api.yourdomain.com npx eas build -p android
  *
- * Without the env var it falls back to FALLBACK_API_ORIGIN below (edit that
- * constant once the production API is deployed, commit, and every future
- * cloud build picks it up automatically).
+ * The fallback below is the production API (Render) — every cloud build
+ * picks it up automatically.
  */
 const base = require('./app.json');
 
-const FALLBACK_API_ORIGIN = 'http://192.168.1.17:4000';
+const FALLBACK_API_ORIGIN = 'https://namma-guruvayoor-api.onrender.com';
 
 module.exports = {
   expo: {
