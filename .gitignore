@@ -3,6 +3,9 @@ node_modules/
 
 # Builds
 dist/
+# @gsv/types dist is committed: Vercel's scoped install never builds it,
+# and webpack resolves the package via its dist entry point.
+!packages/types/dist/
 build/
 .next/
 out/
