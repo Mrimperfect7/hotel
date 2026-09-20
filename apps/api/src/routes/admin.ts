@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { prisma } from '@gsv/database';
+import { prisma, type Prisma } from '@gsv/database';
 import { asyncH, ApiError } from '../lib/errors.js';
 import { requireAuth, requireAdmin } from '../middleware/requireAuth.js';
 import { audit } from '../lib/audit.js';
@@ -48,15 +48,16 @@ adminRouter.get(
   '/hotels',
   asyncH(async (req, res) => {
     const q = z.object({
-      status: z.enum(['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED', 'DEACTIVATED']).optional(),
+      status: z.enum(['PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'SUSPENDED', 'DEACTIVATED', 'REMOVED']).optional(),
       page: z.coerce.number().int().min(1).default(1),
       limit: z.coerce.number().int().min(1).max(100).default(20),
       q: z.string().optional(),
     }).parse(req.query);
 
-    const where = {
-      ...(q.status ? { status: q.status } : {}),
-      deletedAt: null,
+    const isRemoved = q.status === 'REMOVED';
+    const where: Prisma.HotelWhereInput = {
+      ...(q.status && !isRemoved ? { status: q.status as never } : {}),
+      deletedAt: isRemoved ? { not: null } : null,
       ...(q.q ? { OR: [{ name: { contains: q.q, mode: 'insensitive' as const } }, { slug: { contains: q.q } }] } : {}),
     };
 
@@ -92,6 +93,7 @@ adminRouter.get(
         reviews: h._count.reviews,
         submittedAt: h.submittedAt,
         rejectionReason: h.rejectionReason,
+        deletedAt: h.deletedAt,
       })),
     });
   })
@@ -187,6 +189,98 @@ adminRouter.patch(
     }
 
     res.json({ hotel: { id: updated.id, status: updated.status } });
+  })
+);
+
+/**
+ * DELETE /api/admin/hotels/:id — remove a hotel from the platform.
+ * ?permanent=true will hard-delete from the database (allowed if 0 active bookings).
+ * Default: soft-delete (unlists immediately from public search, detail pages, and collections).
+ */
+adminRouter.delete(
+  '/hotels/:id',
+  asyncH(async (req, res) => {
+    const hotel = await prisma.hotel.findUnique({
+      where: { id: req.params.id },
+      include: {
+        _count: {
+          select: {
+            bookings: { where: { status: { in: ['PENDING', 'CONFIRMED'] } } },
+          },
+        },
+      },
+    });
+    if (!hotel) throw ApiError.notFound('Hotel not found');
+
+    const permanent = req.query.permanent === 'true';
+
+    if (permanent) {
+      if (hotel._count.bookings > 0) {
+        throw ApiError.conflict(
+          `Cannot permanently delete: hotel has ${hotel._count.bookings} active booking(s). Unlist it instead.`,
+          'ACTIVE_BOOKINGS'
+        );
+      }
+
+      await prisma.$transaction([
+        prisma.hotelImage.deleteMany({ where: { hotelId: hotel.id } }),
+        prisma.hotelDocument.deleteMany({ where: { hotelId: hotel.id } }),
+        prisma.hotelAmenity.deleteMany({ where: { hotelId: hotel.id } }),
+        prisma.roomAmenity.deleteMany({ where: { roomType: { hotelId: hotel.id } } }),
+        prisma.roomType.deleteMany({ where: { hotelId: hotel.id } }),
+        prisma.favorite.deleteMany({ where: { hotelId: hotel.id } }),
+        prisma.review.deleteMany({ where: { hotelId: hotel.id } }),
+        prisma.commission.deleteMany({ where: { hotelId: hotel.id } }),
+        prisma.hotel.delete({ where: { id: hotel.id } }),
+      ]);
+
+      await audit(req, 'HOTEL_PERMANENTLY_DELETED', 'Hotel', hotel.id, { name: hotel.name, slug: hotel.slug });
+      return res.json({ success: true, message: `Hotel "${hotel.name}" was permanently removed.` });
+    }
+
+    const updated = await prisma.hotel.update({
+      where: { id: hotel.id },
+      data: {
+        deletedAt: new Date(),
+        status: 'DEACTIVATED',
+      },
+    });
+
+    await audit(req, 'HOTEL_REMOVED', 'Hotel', hotel.id, { name: hotel.name, previousStatus: hotel.status });
+
+    // Notify the owner
+    const ownerUser = await prisma.hotelOwner.findUnique({ where: { id: hotel.ownerId }, select: { userId: true } });
+    if (ownerUser) {
+      await notify({
+        userId: ownerUser.userId,
+        type: 'GENERIC' as never,
+        title: `${hotel.name} unlisted`,
+        body: 'Your hotel listing has been removed from the platform by the administrator.',
+        channels: ['IN_APP', 'EMAIL'],
+      });
+    }
+
+    res.json({ success: true, message: `Hotel "${hotel.name}" has been unlisted from the platform.` });
+  })
+);
+
+/** POST /api/admin/hotels/:id/restore — restore an unlisted/removed hotel. */
+adminRouter.post(
+  '/hotels/:id/restore',
+  asyncH(async (req, res) => {
+    const hotel = await prisma.hotel.findUnique({ where: { id: req.params.id } });
+    if (!hotel) throw ApiError.notFound('Hotel not found');
+
+    const updated = await prisma.hotel.update({
+      where: { id: hotel.id },
+      data: {
+        deletedAt: null,
+        status: 'APPROVED',
+      },
+    });
+
+    await audit(req, 'HOTEL_RESTORED', 'Hotel', hotel.id, { name: hotel.name });
+    res.json({ success: true, hotel: { id: updated.id, status: updated.status } });
   })
 );
 
