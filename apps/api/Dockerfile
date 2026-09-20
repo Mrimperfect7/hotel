@@ -1,5 +1,7 @@
 # Namma Guruvayoor API — production image
 FROM node:20-alpine AS build
+# openssl CLI lets Prisma detect the engine flavor (Alpine = OpenSSL 3)
+RUN apk add --no-cache openssl
 WORKDIR /app
 COPY package*.json ./
 COPY apps/api/package.json apps/api/
@@ -14,6 +16,7 @@ COPY packages packages
 RUN npm run db:generate -w @gsv/database && npm run build -w @gsv/config && npm run build -w @gsv/types && npm run build -w @gsv/database && npm run build -w @gsv/api
 
 FROM node:20-alpine
+RUN apk add --no-cache openssl
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/package*.json ./
