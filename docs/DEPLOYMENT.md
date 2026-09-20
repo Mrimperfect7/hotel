@@ -1,5 +1,66 @@
 # Deployment Guide
 
+## Fast path — $0 public deployment (Windows, no Docker needed)
+
+Goal: an API on the public internet so the installed APK works from **any
+network**, for any number of users.
+
+### 1. Permanent free database (Neon)
+
+1. Sign up at **https://neon.tech** (free, no expiry on the free tier).
+2. Create project "namma-guruvayoor" → copy the **connection string**
+   (`postgresql://…neon.tech/neondb?sslmode=require`).
+
+### 2. Public API (Render)
+
+1. Push this repo to GitHub (done), sign up at **https://render.com**.
+2. **New → Blueprint** → select the repo → Render reads `render.yaml`.
+3. When prompted, paste the **Neon connection string** as `DATABASE_URL`.
+4. Deploy (~5 min). Note your URL, e.g. `https://namma-guruvayoor-api.onrender.com`.
+   Free tier sleeps after ~15 min idle; first request then takes ~30–60s
+   (upgrade to the $7/mo plan for always-on).
+5. Test: open `<your-url>/health` in a browser → `{"ok":true,…}`.
+
+### 3. Create the cloud schema + first admin (run from your PC)
+
+```bat
+set DATABASE_URL=<paste your Neon connection string>
+npm run db:push -w @gsv/database
+set ADMIN_EMAIL=admin@yourdomain.com& set ADMIN_PASSWORD=choose-a-long-password
+npm run admin:create -w @gsv/database
+```
+
+(Do **not** run the demo seed on the production database.)
+
+### 4. Rebuild the APK for the world
+
+Edit `FALLBACK_API_ORIGIN` in `apps/mobile/app.config.js` to the Render URL,
+commit, then in your terminal:
+
+```bat
+cd C:\hotel\apps\mobile
+npx eas build -p android --profile preview
+```
+
+Every user on any Wi-Fi/cellular network can now install and use the app.
+Share the APK link directly (installers just accept "install unknown apps"
+once), or publish to the Play Store (below).
+
+### 5. Publish the web app too (optional but recommended)
+
+Vercel: import the repo, root directory `apps/web`, env
+`NEXT_PUBLIC_API_ORIGIN=https://<your-render-url>`. Then set Render's
+`WEB_ORIGIN` to the Vercel URL so CORS accepts it, and redeploy.
+
+### 6. Play Store (later, $25 one-time)
+
+1. Google Play Console account → create app.
+2. Build an AAB: `npx eas build -p android --profile production`.
+3. Store listing needs: privacy policy URL (host the web app first — `/privacy`
+   exists), content rating, screenshots. EAS manages app signing.
+
+---
+
 ## Architecture
 
 | Component | Service | Notes |

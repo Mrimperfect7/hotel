@@ -17,12 +17,26 @@
     },
     "android": {
       "package": "com.nammaguruvayoor.app",
-      "adaptiveIcon": { "backgroundColor": "#1e3a6e" }
+      "adaptiveIcon": {
+        "backgroundColor": "#1e3a6e"
+      }
     },
-    "plugins": ["expo-router", "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
     "extra": {
-      "apiOrigin": "http://192.168.1.17:4000"
+      "apiOrigin": "http://192.168.1.17:4000",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "25d5379c-1009-46c8-9904-fc50e1777beb"
+      }
     },
-    "experiments": { "typedRoutes": true }
+    "experiments": {
+      "typedRoutes": true
+    },
+    "owner": "nammagvr"
   }
 }
