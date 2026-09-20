@@ -37,6 +37,29 @@ npm run dev:mobile              # Expo dev server
 Payments run in **mock mode** until Razorpay keys are set (`PAYMENT_MOCK=1`).
 Email/SMS/WhatsApp senders log to console until providers are configured.
 
+## Mobile app (Expo)
+
+The customer app (`apps/mobile`) is a full Expo Router app: Home, Explore
+(distance bands, sort, budget filter), hotel detail with photo gallery,
+amenities and rooms, guest **or** signed-in checkout, My Bookings with
+**guest tracking** (booking ID + phone/email), Saved hotels, and
+Profile/login with secure token storage (expo-secure-store) and automatic
+access-token refresh.
+
+Run it against your local API:
+
+```bash
+npm run dev:mobile        # starts Expo — scan the QR with Expo Go (iOS/Android)
+```
+
+The API origin defaults to `http://localhost:4000` (see `app.json → extra.apiOrigin`).
+For a physical device, point it at your machine's LAN IP.
+
+```bash
+npx expo export --platform android      # verify a production Hermes bundle
+eas build -p android --profile preview  # store-ready APK (needs Expo account)
+```
+
 ## Demo accounts (from `.env`, seeded only in development)
 
 | Role        | Email                          | Password      |

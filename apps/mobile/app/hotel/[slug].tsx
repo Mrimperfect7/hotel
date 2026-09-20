@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { api } from '../../src/lib/api';
+import { api, getToken } from '../../src/lib/api';
 import { theme } from '../../src/lib/theme';
 import { formatINR, distanceLabel } from '@gsv/types';
 
@@ -22,6 +22,8 @@ export default function HotelDetail() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fav, setFav] = useState(false);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
     api.get<{ hotel: Hotel }>(`/api/hotels/${slug}`)
@@ -29,6 +31,30 @@ export default function HotelDetail() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [slug]);
+
+  // Load favourite state for signed-in users.
+  useEffect(() => {
+    (async () => {
+      if (!(await getToken()) || !hotel) return;
+      setAuthed(true);
+      api
+        .get<{ favorites: Array<{ hotelId: string }> }>('/api/me/favorites', true)
+        .then((r) => setFav(r.favorites.some((f) => f.hotelId === hotel.id)))
+        .catch(() => {});
+    })();
+  }, [hotel]);
+
+  async function toggleFav() {
+    if (!hotel) return;
+    const next = !fav;
+    setFav(next);
+    try {
+      if (next) await api.post(`/api/me/favorites/${hotel.id}`, {}, true);
+      else await api.del(`/api/me/favorites/${hotel.id}`, true);
+    } catch {
+      setFav(!next); // revert on failure
+    }
+  }
 
   if (loading) return <ActivityIndicator color={theme.gold} style={{ marginTop: 80 }} />;
   if (!hotel) return <Text style={{ padding: 40, textAlign: 'center' }}>Hotel unavailable.</Text>;
@@ -42,7 +68,14 @@ export default function HotelDetail() {
       </ScrollView>
 
       <View style={{ padding: 16, gap: 12 }}>
-        <Text style={styles.title}>{hotel.name} <Text style={{ fontSize: 12 }}> ✔️</Text></Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={[styles.title, { flexShrink: 1 }]}>{hotel.name} <Text style={{ fontSize: 12 }}> ✔️</Text></Text>
+          {authed && (
+            <Pressable onPress={toggleFav} style={styles.favBtn} hitSlop={8} accessibilityLabel="Save hotel">
+              <Text style={{ fontSize: 20 }}>{fav ? '❤️' : '🤍'}</Text>
+            </Pressable>
+          )}
+        </View>
         <Text style={styles.sub}>📍 {hotel.addressLine1}</Text>
         <Text style={styles.distance}>🛕 {hotel.distanceMeters != null ? `${distanceLabel(hotel.distanceMeters)} from Guruvayoor Temple` : ''}</Text>
         {hotel.description && <Text style={styles.body}>{hotel.description}</Text>}
@@ -90,6 +123,7 @@ export default function HotelDetail() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.ivory },
   title: { fontSize: 22, fontWeight: 'bold', color: theme.text },
+  favBtn: { backgroundColor: '#fff', borderRadius: 999, padding: 8 },
   sub: { fontSize: 13, color: theme.subtext },
   distance: { fontSize: 13, color: theme.kerala, fontWeight: '600' },
   body: { fontSize: 14, color: theme.text, lineHeight: 21 },
