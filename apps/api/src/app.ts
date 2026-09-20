@@ -20,7 +20,7 @@ export function buildApp() {
       origin: (origin, cb) => {
         if (!origin) return cb(null, true); // curl / mobile webviews
         if (origin === config.webOrigin || origin.startsWith('exp://')) return cb(null, true);
-        if (/^http:\/\/localhost:\d+$/.test(origin)) return cb(null, true);
+        if (/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) return cb(null, true);
         return cb(new Error('Not allowed by CORS'));
       },
       credentials: false,

@@ -109,9 +109,13 @@ app.use(errorHandler);
 // Treat PORT=0 as unset (some CI/shell environments export a zero default).
 const rawPort = Number(process.env.PORT ?? 4000);
 const PORT = Number.isFinite(rawPort) && rawPort > 0 ? rawPort : 4000;
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`🛕 Namma Guruvayoor API ready on :${PORT} — docs at /docs`);
-});
+
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`🛕 Namma Guruvayoor API ready on :${PORT} — docs at /docs`);
+  });
+}
 
 export { app };
+export default app;
