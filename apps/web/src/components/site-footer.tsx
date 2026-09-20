@@ -7,11 +7,11 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-temple-600 text-gold-300">🛕</span>
-            <span className="font-display font-bold text-temple-700">Guruvayoor Stay</span>
+            <img src="/logo.png" alt="Namma Guruvayoor" className="h-10 w-10 rounded-lg object-contain" />
+            <span className="font-display font-bold text-temple-700">Namma Guruvayoor</span>
           </div>
           <p className="mt-3 text-sm text-temple-500">
-            Verified stays near Guruvayoor Sri Krishna Temple — book directly with the hotel.
+            Verified stays near Guruvayoor Sri Krishna Temple — book directly with the hotel. <em>Book · Stay · Be Closer.</em>
           </p>
         </div>
         <div>
@@ -44,7 +44,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-temple-100 py-4 text-center text-xs text-temple-400">
-        🛕 Made for devotees · Guruvayoor, Thrissur District, Kerala · © {new Date().getFullYear()} Guruvayoor Stay
+        🛕 Made for devotees · Guruvayoor, Thrissur District, Kerala · © {new Date().getFullYear()} Namma Guruvayoor
       </div>
     </footer>
   );

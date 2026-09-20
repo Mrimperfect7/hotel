@@ -1,4 +1,4 @@
-# Database Design — Guruvayoor Stay
+# Database Design — Namma Guruvayoor
 
 PostgreSQL 16 via Prisma ORM. Schema: [`packages/database/prisma/schema.prisma`](../packages/database/prisma/schema.prisma).
 

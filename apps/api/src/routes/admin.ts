@@ -174,7 +174,7 @@ adminRouter.patch(
     const ownerUser = await prisma.hotelOwner.findUnique({ where: { id: hotel.ownerId }, select: { userId: true } });
     if (ownerUser) {
       const msgs: Record<string, { type: never; title: string; body: string }> = {
-        HOTEL_APPROVED: { type: 'HOTEL_APPROVED' as never, title: `${hotel.name} is live! 🎉`, body: 'Your property passed verification and is now bookable on Guruvayoor Stay.' },
+        HOTEL_APPROVED: { type: 'HOTEL_APPROVED' as never, title: `${hotel.name} is live! 🎉`, body: 'Your property passed verification and is now bookable on Namma Guruvayoor.' },
         HOTEL_REJECTED: { type: 'HOTEL_REJECTED' as never, title: `Update on ${hotel.name}`, body: reason ?? 'Your listing was not approved. Contact support for details.' },
         HOTEL_CHANGES_REQUESTED: { type: 'HOTEL_CHANGES_REQUESTED' as never, title: `Changes requested for ${hotel.name}`, body: reason ?? 'Please review the admin feedback.' },
         HOTEL_SUSPENDED: { type: 'GENERIC' as never, title: `${hotel.name} suspended`, body: reason ?? 'Your listing is temporarily suspended.' },

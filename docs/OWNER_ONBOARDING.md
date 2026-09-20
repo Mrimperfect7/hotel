@@ -1,6 +1,6 @@
 # Hotel Owner Onboarding Guide
 
-Welcome to Guruvayoor Stay 🛕 — this guide takes you from sign-up to your first
+Welcome to Namma Guruvayoor 🛕 — this guide takes you from sign-up to your first
 confirmed booking.
 
 ## 1. Create an owner account

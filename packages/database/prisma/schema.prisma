@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Guruvayoor Stay — database schema (PostgreSQL + Prisma)
+// Namma Guruvayoor — database schema (PostgreSQL + Prisma)
 //
 // Conventions
 //  • UUID primary keys (DB-generated), createdAt/updatedAt on every entity.

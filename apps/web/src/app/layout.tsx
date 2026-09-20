@@ -6,13 +6,15 @@ import { SiteFooter } from '@/components/site-footer';
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: {
-    default: 'Guruvayoor Stay — Hotels near Guruvayoor Sri Krishna Temple',
-    template: '%s · Guruvayoor Stay',
+    default: 'Namma Guruvayoor — Hotels near Guruvayoor Sri Krishna Temple',
+    template: '%s · Namma Guruvayoor',
   },
   description:
     'Book verified hotels, homestays and lodges within walking distance of Guruvayoor Sri Krishna Temple, Kerala. Direct hotel confirmations, pilgrim-friendly stays.',
+  icons: { icon: '/favicon.png' },
   openGraph: {
-    siteName: 'Guruvayoor Stay',
+    siteName: 'Namma Guruvayoor',
+    images: ['/logo-og.png'],
     type: 'website',
     locale: 'en_IN',
   },

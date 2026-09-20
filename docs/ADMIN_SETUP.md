@@ -20,7 +20,7 @@ npm run admin:create -w @gsv/database
 In development only, `npm run db:seed` creates an admin from env vars:
 
 ```
-DEMO_ADMIN_EMAIL=admin@guruvayoorstay.test
+DEMO_ADMIN_EMAIL=admin@nammaguruvayoor.test
 DEMO_ADMIN_PASSWORD=Admin@12345
 ```
 

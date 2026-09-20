@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 /**
- * Guruvayoor Stay design tokens.
+ * Namma Guruvayoor design tokens.
  * Deep temple blue · warm gold · ivory · subtle Kerala green.
  */
 const config: Config = {

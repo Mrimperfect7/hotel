@@ -28,13 +28,13 @@ export function signAccessToken(user: AuthUser): string {
   return jwt.sign(
     { sub: user.id, role: user.role, name: user.name, email: user.email, phone: user.phone },
     config.jwtSecret,
-    { expiresIn: config.jwtAccessTtl, issuer: 'guruvayoor-stay', audience: 'gsv-clients' } as jwt.SignOptions
+    { expiresIn: config.jwtAccessTtl, issuer: 'namma-guruvayoor', audience: 'gsv-clients' } as jwt.SignOptions
   );
 }
 
 export function verifyAccessToken(token: string): AuthUser {
   const payload = jwt.verify(token, config.jwtSecret, {
-    issuer: 'guruvayoor-stay',
+    issuer: 'namma-guruvayoor',
     audience: 'gsv-clients',
   }) as { sub: string; role: AuthUser['role']; name: string; email: string | null; phone: string | null };
   return { id: payload.sub, role: payload.role, name: payload.name, email: payload.email, phone: payload.phone };

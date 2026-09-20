@@ -3,9 +3,9 @@ import { notFound } from 'next/navigation';
 
 const PAGES: Record<string, { title: string; body: string[] }> = {
   about: {
-    title: 'About Guruvayoor Stay',
+    title: 'About Namma Guruvayoor',
     body: [
-      'Guruvayoor Stay was built with a simple observation: millions of devotees visit Guruvayoor Sri Krishna Temple every year, yet finding honest, verified accommodation near the temple was a word-of-mouth exercise.',
+      'Namma Guruvayoor was built with a simple observation: millions of devotees visit Guruvayoor Sri Krishna Temple every year, yet finding honest, verified accommodation near the temple was a word-of-mouth exercise.',
       'We work directly with hotels, lodges, homestays and guest houses around the temple — verifying every property before it can accept a single booking. When you book here, your request goes straight to the hotel, and the hotel confirms it to you. No opaque listings, no bait-and-switch.',
       'Our team is based in Kerala, and we are devotees ourselves. 🛕',
     ],
@@ -13,8 +13,8 @@ const PAGES: Record<string, { title: string; body: string[] }> = {
   contact: {
     title: 'Contact Us',
     body: [
-      'For booking support: support@guruvayoorstay.test',
-      'For hotel owners: partners@guruvayoorstay.test',
+      'For booking support: support@nammaguruvayoor.test',
+      'For hotel owners: partners@nammaguruvayoor.test',
       'Phone/WhatsApp: +91 90000 00000 (9 AM – 9 PM IST)',
       'Registered office: Guruvayoor, Thrissur District, Kerala 680101, India.',
     ],
@@ -34,8 +34,8 @@ const PAGES: Record<string, { title: string; body: string[] }> = {
   terms: {
     title: 'Terms of Service',
     body: [
-      'By using Guruvayoor Stay you agree to provide accurate contact details so hotels can reach you about your booking.',
-      'Bookings are requests until the hotel confirms them. A confirmed booking is a contract between you and the hotel; Guruvayoor Stay is the platform that facilitates it.',
+      'By using Namma Guruvayoor you agree to provide accurate contact details so hotels can reach you about your booking.',
+      'Bookings are requests until the hotel confirms them. A confirmed booking is a contract between you and the hotel; Namma Guruvayoor is the platform that facilitates it.',
       'Rates include taxes shown at checkout. The platform commission is paid by the hotel, not added to your price.',
       'We verify every property before listing and suspend properties that receive verified complaints about safety or fraud.',
     ],
@@ -46,7 +46,7 @@ const PAGES: Record<string, { title: string; body: string[] }> = {
       'We collect only the information needed to operate bookings: your name, contact details and stay preferences.',
       'Your contact details are shared with the hotel you book — and only that hotel. We never sell personal data.',
       'Payments are processed by Razorpay (PCI-DSS compliant). We never see or store your card details.',
-      'You can request deletion of your account and data at privacy@guruvayoorstay.test.',
+      'You can request deletion of your account and data at privacy@nammaguruvayoor.test.',
     ],
   },
 };

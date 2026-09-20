@@ -82,7 +82,7 @@ export default function ListYourHotelPage() {
   if (!started) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-14">
-        <h1 className="font-display text-3xl font-bold text-temple-700">List Your Hotel on Guruvayoor Stay</h1>
+        <h1 className="font-display text-3xl font-bold text-temple-700">List Your Hotel on Namma Guruvayoor</h1>
         <p className="mt-3 text-temple-600">
           Reach thousands of pilgrims and families visiting Guruvayoor Sri Krishna Temple. Bookings go
           directly to you — confirm, decline or contact guests from your dashboard or phone.

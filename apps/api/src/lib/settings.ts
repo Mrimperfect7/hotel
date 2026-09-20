@@ -10,7 +10,7 @@ export type PlatformSettings = {
 };
 
 const DEFAULTS: PlatformSettings = {
-  platformName: 'Guruvayoor Stay',
+  platformName: 'Namma Guruvayoor',
   commissionBps: 1000,
   bookingFeePaise: 0,
   taxBps: 1200,

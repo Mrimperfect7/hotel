@@ -1,5 +1,5 @@
 /**
- * Guruvayoor Stay — shared domain package (API + web + mobile).
+ * Namma Guruvayoor — shared domain package (API + web + mobile).
  * Single source of truth for enums, constants, the booking state machine,
  * money helpers and zod validators.
  */

@@ -1,4 +1,4 @@
-# Guruvayoor Stay API — production image
+# Namma Guruvayoor API — production image
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./

@@ -1,5 +1,5 @@
 /**
- * Guruvayoor Stay — environment configuration loader.
+ * Namma Guruvayoor — environment configuration loader.
  * Reads .env from the repo root (two levels up) so both apps/api and apps/web
  * can share one file. Falls back to process.env when already provided.
  */

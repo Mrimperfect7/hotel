@@ -40,13 +40,13 @@ app.use('/uploads', express.static(path.resolve('uploads'), { fallthrough: true,
 // Lightweight API docs page.
 app.get('/docs', (_req, res) => {
   res.type('html').send(`<!doctype html>
-<html><head><title>Guruvayoor Stay API</title>
+<html><head><title>Namma Guruvayoor API</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>body{font-family:ui-sans-serif,system-ui;max-width:860px;margin:40px auto;padding:0 16px;color:#1e2340}
 h1{color:#1e3a6e}code{background:#f1ecdf;padding:2px 6px;border-radius:4px}
 li{margin:6px 0}details{margin:8px 0}summary{cursor:pointer;font-weight:600}</style></head>
 <body>
-<h1>🙏 Guruvayoor Stay — API</h1>
+<h1>🙏 Namma Guruvayoor — API</h1>
 <p>REST API for the hotel marketplace near Guruvayoor Sri Krishna Temple.</p>
 <details open><summary>Auth</summary>
 <ul>
@@ -101,7 +101,7 @@ li{margin:6px 0}details{margin:8px 0}summary{cursor:pointer;font-weight:600}</st
 </body></html>`);
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true, service: 'guruvayoor-stay-api', time: new Date().toISOString() }));
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'namma-guruvayoor-api', time: new Date().toISOString() }));
 
 app.use(notFoundHandler);
 app.use(errorHandler);
@@ -111,7 +111,7 @@ const rawPort = Number(process.env.PORT ?? 4000);
 const PORT = Number.isFinite(rawPort) && rawPort > 0 ? rawPort : 4000;
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
-  console.log(`🛕 Guruvayoor Stay API ready on :${PORT} — docs at /docs`);
+  console.log(`🛕 Namma Guruvayoor API ready on :${PORT} — docs at /docs`);
 });
 
 export { app };

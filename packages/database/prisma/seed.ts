@@ -91,7 +91,7 @@ const HOTELS: HotelSeed[] = [
 ];
 
 async function main() {
-  console.log('🌱 Seeding DEMO data for Guruvayoor Stay…');
+  console.log('🌱 Seeding DEMO data for Namma Guruvayoor…');
 
   // Wipe (idempotent dev reseeding).
   await prisma.$transaction([
@@ -114,7 +114,7 @@ async function main() {
   // Platform settings (10% default commission — configurable in admin).
   await prisma.platformSetting.create({
     data: { key: 'platform', value: {
-      platformName: 'Guruvayoor Stay', commissionBps: 1000, bookingFeePaise: 0,
+      platformName: 'Namma Guruvayoor', commissionBps: 1000, bookingFeePaise: 0,
       taxBps: 1200, maxHotelDistanceMeters: 5000, featuredHotelIds: [],
     } },
   });
@@ -123,7 +123,7 @@ async function main() {
   const ownerHash = await bcrypt.hash('Owner@123', 12);
 
   // Admin.
-  const adminEmail = (process.env.DEMO_ADMIN_EMAIL ?? 'admin@guruvayoorstay.test').toLowerCase();
+  const adminEmail = (process.env.DEMO_ADMIN_EMAIL ?? 'admin@nammaguruvayoor.test').toLowerCase();
   const adminPassword = process.env.DEMO_ADMIN_PASSWORD ?? 'Admin@12345';
   await prisma.user.create({
     data: { email: adminEmail, name: process.env.DEMO_ADMIN_NAME ?? 'Platform Admin', role: 'ADMIN', passwordHash: await bcrypt.hash(adminPassword, 12), emailVerified: true },
@@ -135,7 +135,7 @@ async function main() {
   for (let i = 0; i < OWNER_NAMES.length; i++) {
     const u = await prisma.user.create({
       data: {
-        email: `owner${i + 1}@guruvayoorstay.test`,
+        email: `owner${i + 1}@nammaguruvayoor.test`,
         name: OWNER_NAMES[i]!,
         role: 'HOTEL_OWNER',
         passwordHash: ownerHash,
@@ -145,7 +145,7 @@ async function main() {
             ownerName: OWNER_NAMES[i]!,
             phone: `+9198470${String(10000 + i).slice(0, 5)}`,
             whatsapp: `+9198470${String(10000 + i).slice(0, 5)}`,
-            email: `owner${i + 1}@guruvayoorstay.test`,
+            email: `owner${i + 1}@nammaguruvayoor.test`,
           },
         },
       },
@@ -197,7 +197,7 @@ async function main() {
         refundPolicy: h.refund,
         hotelRules: '• Please carry a valid government ID.\n• Respect temple-town quiet hours after 22:00.\n• Non-veg and alcohol are not permitted on premises.',
         contactPhone: '+91984701234' + i,
-        contactEmail: `${slug}@guruvayoorstay.test`,
+        contactEmail: `${slug}@nammaguruvayoor.test`,
         whatsapp: '+91984701234' + i,
         isFeatured: Boolean(h.featured),
         submittedAt: new Date(),

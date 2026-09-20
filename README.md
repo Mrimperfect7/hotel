@@ -1,4 +1,4 @@
-# Guruvayoor Stay — monorepo
+# Namma Guruvayoor — monorepo
 
 Production-grade hotel booking platform **exclusively for accommodations near
 Guruvayoor Sri Krishna Temple, Kerala**. Pilgrims, tourists and families search,
@@ -41,7 +41,7 @@ Email/SMS/WhatsApp senders log to console until providers are configured.
 
 | Role        | Email                          | Password      |
 | ----------- | ------------------------------ | ------------- |
-| Admin       | `admin@guruvayoorstay.test`    | `Admin@12345` |
+| Admin       | `admin@nammaguruvayoor.test`    | `Admin@12345` |
 | Owner       | `owner@sreekrishna.test`       | `Owner@123`   |
 | Customer    | `arjun@example.test`           | `Customer@123`|
 

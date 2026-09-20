@@ -21,10 +21,10 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-temple-100 bg-ivory/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-temple-600 text-lg text-gold-300">🛕</span>
-          <span className="font-display text-lg font-bold text-temple-700">
-            Guruvayoor <span className="text-gold-600">Stay</span>
+        <Link href="/" className="flex items-center gap-2.5">
+          <img src="/logo.png" alt="Namma Guruvayoor" className="h-11 w-11 rounded-lg object-contain" />
+          <span className="font-display text-lg font-bold leading-tight text-temple-700">
+            Namma <span className="text-gold-600">Guruvayoor</span>
           </span>
         </Link>
 

@@ -61,7 +61,7 @@ export default function Profile() {
         </View>
       ) : (
         <View style={{ padding: 16, gap: 12 }}>
-          <Text style={styles.title}>{mode === 'login' ? 'Welcome back' : 'Join Guruvayoor Stay'}</Text>
+          <Text style={styles.title}>{mode === 'login' ? 'Welcome back' : 'Join Namma Guruvayoor'}</Text>
           <View style={styles.card}>
             {mode === 'register' && (
               <>

@@ -16,7 +16,7 @@ export default function TabsLayout() {
         headerTintColor: '#f9ecc8',
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Guruvayoor Stay', tabBarIcon: ({ focused }) => <TabIcon icon="🛕" focused={focused} /> }} />
+      <Tabs.Screen name="index" options={{ title: 'Namma Guruvayoor', tabBarIcon: ({ focused }) => <TabIcon icon="🛕" focused={focused} /> }} />
       <Tabs.Screen name="explore" options={{ title: 'Explore', tabBarIcon: ({ focused }) => <TabIcon icon="🔍" focused={focused} /> }} />
       <Tabs.Screen name="bookings" options={{ title: 'Bookings', tabBarIcon: ({ focused }) => <TabIcon icon="🧾" focused={focused} /> }} />
       <Tabs.Screen name="saved" options={{ title: 'Saved', tabBarIcon: ({ focused }) => <TabIcon icon="❤️" focused={focused} /> }} />
