@@ -1,0 +1,517 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Guruvayoor Stay — database schema (PostgreSQL + Prisma)
+//
+// Conventions
+//  • UUID primary keys (DB-generated), createdAt/updatedAt on every entity.
+//  • All money is stored as Int paise (₹1 = 100 paise) — never floats.
+//  • Stay dates are @db.Date (calendar days, no timezone drift).
+//  • Soft deletion via deletedAt where history matters (users, hotels, rooms).
+//  • Inventory = RoomType.totalRooms; "booked" is derived from active bookings
+//    (PENDING/CONFIRMED) via BookingRoom rows — no double bookkeeping to drift.
+// ───────────────────────────────────────────────── partial index hint ───────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  HOTEL_OWNER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum HotelStatus {
+  PENDING        // submitted by owner, awaiting admin
+  UNDER_REVIEW   // admin has picked it up
+  APPROVED       // verified, visible + bookable
+  REJECTED       // admin declined
+  SUSPENDED      // temporarily delisted (policy violation)
+  DEACTIVATED    // owner took it offline
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  INITIATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  MOCK
+}
+
+enum ReviewStatus {
+  PUBLISHED
+  HIDDEN
+  FLAGGED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+}
+
+enum NotificationType {
+  BOOKING_CREATED
+  BOOKING_CONFIRMED
+  BOOKING_REJECTED
+  BOOKING_CANCELLED
+  BOOKING_COMPLETED
+  PAYMENT_RECEIVED
+  REFUND_ISSUED
+  HOTEL_APPROVED
+  HOTEL_REJECTED
+  HOTEL_CHANGES_REQUESTED
+  NEW_REVIEW
+  REVIEW_RESPONSE
+  GENERIC
+}
+
+enum CommissionScope {
+  DEFAULT
+  HOTEL
+  PROMO
+}
+
+enum RefundPolicy {
+  FREE_CANCEL_24H
+  FREE_CANCEL_48H
+  MODERATE
+  STRICT
+  NON_REFUNDABLE
+}
+
+// ── Auth & people ────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  email         String?   @unique
+  phone         String?   @unique
+  passwordHash  String?
+  name          String
+  role          Role      @default(CUSTOMER)
+  avatarUrl     String?
+  emailVerified Boolean   @default(false)
+  phoneVerified Boolean   @default(false)
+  isBlocked     Boolean   @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  customerProfile   Customer?
+  ownerProfile      HotelOwner?
+  refreshTokens     RefreshToken[]
+  notifications     Notification[]
+  reviews           Review[]
+  favorites         Favorite[]
+  auditLogs         AuditLog[]
+  deviceTokens      DeviceToken[]
+  bookingsAsCustomer Booking[]     @relation("CustomerBookings")
+
+  @@index([role])
+  @@index([isBlocked])
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  userId      String
+  tokenHash   String   @unique
+  device      String?
+  ip          String?
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  replacedBy  String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  platform  String   @default("android") // android | ios | web
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ── Profiles ─────────────────────────────────────────────────────────────────
+
+model Customer {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  city          String?
+  state         String?
+  preferredLang String   @default("en")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HotelOwner {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  ownerName   String
+  phone       String
+  whatsapp    String?
+  email       String
+  gstin       String?
+  panNumber   String?
+
+  hotels Hotel[] @relation("OwnerHotels")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── Hotel domain ─────────────────────────────────────────────────────────────
+
+model Hotel {
+  id            String      @id @default(uuid())
+  ownerId       String
+  slug          String      @unique
+  name          String
+  description   String?     @db.Text
+  status        HotelStatus @default(PENDING)
+  addressLine1  String
+  addressLine2  String?
+  city          String      @default("Guruvayoor")
+  state         String      @default("Kerala")
+  pincode       String
+  lat           Float
+  lng           Float
+  /// Meters to Guruvayoor Temple — computed from coordinates, overridden by admin if needed
+  distanceMeters Int?
+  starRating    Int         @default(0)
+  checkInTime   String      @default("12:00")
+  checkOutTime  String      @default("11:00")
+  cancellationPolicyText String @db.Text
+  refundPolicy  RefundPolicy @default(MODERATE)
+  hotelRules    String?     @db.Text
+  ownerNote     String?     @db.Text
+  commissionBps Int?        // hotel-specific commission override (basis points)
+  isFeatured    Boolean     @default(false)
+  minPricePaise Int         @default(0) // denormalized for sort/filter
+  ratingAvg     Float       @default(0)
+  reviewCount   Int         @default(0)
+  rejectionReason String?   @db.Text
+  contactPhone  String
+  contactEmail  String
+  whatsapp      String?
+  mapUrl        String?
+  submittedAt   DateTime?
+  reviewedAt    DateTime?
+  approvedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  deletedAt     DateTime?
+
+  owner        HotelOwner      @relation("OwnerHotels", fields: [ownerId], references: [id])
+  images       HotelImage[]
+  documents    HotelDocument[]
+  amenities    HotelAmenity[]
+  roomTypes    RoomType[]
+  bookings     Booking[]
+  reviews      Review[]
+  favorites    Favorite[]
+  commissionOverrides Commission[] @relation("HotelCommission")
+
+  @@index([status, deletedAt])
+  @@index([ownerId])
+  @@index([city, status])
+  @@index([minPricePaise])
+  @@index([ratingAvg])
+}
+
+model HotelImage {
+  id        String   @id @default(uuid())
+  hotelId   String
+  url       String
+  altText   String?
+  sortOrder Int      @default(0)
+  isCover   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId, sortOrder])
+}
+
+model HotelDocument {
+  id          String   @id @default(uuid())
+  hotelId     String
+  docType     String   // registration | gst | id_proof | license | other
+  url         String
+  docNumber   String?
+  verified    Boolean  @default(false)
+  notes       String?
+  uploadedAt  DateTime @default(now())
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId])
+}
+
+model Amenity {
+  id       String @id @default(uuid())
+  key      String @unique // wifi, ac, parking, breakfast, family_rooms, lift, couple_friendly...
+  label    String
+  icon     String @default("✓")
+  category String @default("general") // general | room | temple | safety
+  sortOrder Int   @default(0)
+
+  hotels HotelAmenity[]
+  rooms  RoomAmenity[]
+}
+
+model HotelAmenity {
+  hotelId   String
+  amenityId String
+
+  hotel  Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([hotelId, amenityId])
+}
+
+model RoomType {
+  id           String  @id @default(uuid())
+  hotelId      String
+  name         String  // Deluxe AC Room…
+  slug         String
+  description  String? @db.Text
+  basePricePaise Int
+  maxOccupancy Int     @default(2)
+  bedType      String  @default("Queen")
+  roomSizeSqft Int?
+  acAvailable  Boolean @default(false)
+  totalRooms   Int     @default(1)
+  blockedRooms Int     @default(0) // maintenance etc.
+  images       Json?   // [{url, alt}]
+  amenities    RoomAmenity[]
+  bookings     BookingRoom[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+
+  @@unique([hotelId, slug])
+  @@index([hotelId, deletedAt])
+  @@index([basePricePaise])
+}
+
+model RoomAmenity {
+  roomTypeId String
+  amenityId  String
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  amenity  Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([roomTypeId, amenityId])
+}
+
+// ── Booking domain ───────────────────────────────────────────────────────────
+
+model Booking {
+  id            String        @id @default(uuid())
+  bookingCode   String        @unique // GV-YYYY-XXXXXX
+  hotelId       String
+  customerId    String?       // null ⇒ guest booking
+  guestName     String?
+  guestPhone    String?
+  guestEmail    String?
+  checkIn       DateTime      @db.Date
+  checkOut      DateTime      @db.Date
+  nights        Int
+  guests        Int
+  roomsCount    Int
+  subtotalPaise Int
+  taxPaise      Int
+  totalPaise    Int
+  commissionPaise Int         @default(0)
+  ownerPayoutPaise Int        @default(0)
+  status        BookingStatus @default(PENDING)
+  specialRequests String?     @db.Text
+  cancelReason  String?       @db.Text
+  cancelledBy   String?       // CUSTOMER | OWNER | ADMIN
+  confirmedAt   DateTime?
+  rejectedAt    DateTime?
+  cancelledAt   DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  hotel     Hotel         @relation(fields: [hotelId], references: [id])
+  customer  User?         @relation("CustomerBookings", fields: [customerId], references: [id])
+  rooms     BookingRoom[]
+  payments  Payment[]
+  review    Review?
+
+  @@index([hotelId, status, checkIn])
+  @@index([customerId])
+  @@index([status, createdAt])
+  @@index([guestPhone])
+  @@index([guestEmail])
+}
+
+model BookingRoom {
+  id         String   @id @default(uuid())
+  bookingId  String
+  roomTypeId String
+  roomsCount Int
+  pricePaise Int      // per-room per-night price snapshot at booking time
+
+  booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  roomType RoomType @relation(fields: [roomTypeId], references: [id])
+
+  @@index([roomTypeId, bookingId])
+}
+
+model Payment {
+  id            String          @id @default(uuid())
+  bookingId     String
+  provider      PaymentProvider @default(MOCK)
+  providerOrderId   String?
+  providerPaymentId String?
+  status        PaymentStatus   @default(INITIATED)
+  amountPaise   Int
+  currency      String          @default("INR")
+  method        String?         // upi | card | netbanking | wallet
+  failureReason String?
+  refundId      String?
+  refundAmountPaise Int         @default(0)
+  rawPayload    Json?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([providerOrderId])
+  @@index([status])
+}
+
+model Commission {
+  id        String          @id @default(uuid())
+  scope     CommissionScope @default(DEFAULT)
+  hotelId   String?
+  rateBps   Int             // 1000 = 10%
+  activeFrom DateTime       @default(now())
+  activeTo  DateTime?
+  note      String?
+  createdAt DateTime        @default(now())
+
+  hotel Hotel? @relation("HotelCommission", fields: [hotelId], references: [id])
+
+  @@index([scope, activeFrom])
+  @@index([hotelId])
+}
+
+// ── Engagement ───────────────────────────────────────────────────────────────
+
+model Review {
+  id          String       @id @default(uuid())
+  bookingId   String       @unique // one review per completed booking
+  hotelId     String
+  customerId  String
+  overall     Int          // 1..5
+  cleanliness Int
+  location    Int
+  staff       Int
+  value       Int
+  comment     String?      @db.Text
+  photos      Json?
+  status      ReviewStatus @default(PUBLISHED)
+  response    String?      @db.Text
+  respondedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  hotel   Hotel   @relation(fields: [hotelId], references: [id])
+  customer User  @relation(fields: [customerId], references: [id])
+
+  @@index([hotelId, status])
+}
+
+model Favorite {
+  userId  String
+  hotelId String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@id([userId, hotelId])
+}
+
+model Notification {
+  id        String              @id @default(uuid())
+  userId    String
+  type      NotificationType
+  channel   NotificationChannel @default(IN_APP)
+  title     String
+  body      String              @db.Text
+  meta      Json?
+  readAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  actorRole String?
+  action    String   // HOTEL_APPROVED, BOOKING_CANCELLED, REFUND_ISSUED…
+  entity    String   // Hotel, Booking, User…
+  entityId  String?
+  ip        String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+  @@index([action])
+}
+
+// ── Platform settings (admin-editable, never hard-coded) ─────────────────────
+
+model PlatformSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

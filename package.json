@@ -1,0 +1,30 @@
+{
+  "name": "guruvayoor-stay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hotel booking platform exclusively for stays near Guruvayoor Sri Krishna Temple, Kerala.",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:db": "node scripts/dev-db.mjs up",
+    "dev:db:down": "node scripts/dev-db.mjs down",
+    "db:push": "npm run db:push -w @gsv/database",
+    "db:seed": "npm run db:seed -w @gsv/database",
+    "build:packages": "npm run build -w @gsv/config && npm run build -w @gsv/types && npm run build -w @gsv/database && npm run build -w @gsv/ui",
+    "dev:api": "npm run dev -w @gsv/api",
+    "dev:web": "npm run dev -w @gsv/web",
+    "dev:mobile": "npm run dev -w @gsv/mobile",
+    "build:api": "npm run build -w @gsv/api",
+    "build:web": "npm run build -w @gsv/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "start:api": "npm run start -w @gsv/api"
+  },
+  "dependencies": {
+    "caniuse-lite": "^1.0.30001667"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Guruvayoor Stay",
+    "slug": "guruvayoor-stay",
+    "scheme": "guruvayoorstay",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1e3a6e",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.guruvayoorstay.app"
+    },
+    "android": {
+      "package": "com.guruvayoorstay.app",
+      "adaptiveIcon": { "backgroundColor": "#1e3a6e" }
+    },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "extra": {
+      "apiOrigin": "http://localhost:4000"
+    },
+    "experiments": { "typedRoutes": true }
+  }
+}

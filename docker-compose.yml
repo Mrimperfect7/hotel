@@ -1,0 +1,44 @@
+# Production-parity local stack (API + PostgreSQL).
+# Web is deployed to Vercel; mobile via EAS. Run `docker compose up api db`.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gsv
+      POSTGRES_PASSWORD: gsv
+      POSTGRES_DB: guruvayoor_stay
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gsv -d guruvayoor_stay"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://gsv:gsv@db:5432/guruvayoor_stay?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
+      WEB_ORIGIN: ${WEB_ORIGIN}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
+      CLOUDINARY_URL: ${CLOUDINARY_URL}
+    ports:
+      - "4000:4000"
+
+volumes:
+  pgdata:

@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Builds
+dist/
+build/
+.next/
+out/
+.expo/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Embedded dev postgres
+.pgdata/
+scripts/.pgsql/
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Prisma
+packages/database/prisma/migrations/dev/
+
+# Misc
+coverage/
+.turbo/
+
+# Tool metadata
+.freebuff/
+scripts/pg.zip
+scripts/*.zip
