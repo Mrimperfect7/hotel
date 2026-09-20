@@ -9,6 +9,7 @@
  */
 import { prisma, type NotificationType } from '@gsv/database';
 import { config } from '@gsv/config';
+import { sendGupshupWhatsApp } from './whatsapp-gupshup.js';
 
 export type NotifyInput = {
   userId: string;
@@ -28,10 +29,16 @@ const consoleSender =
     console.log(`[${channel} → ${to}] ${title} — ${body}`);
   };
 
+/** Gupshup WhatsApp sender — used when WHATSAPP_PROVIDER=gupshup */
+const gupshupSender: ChannelSender = async (to, title, body) => {
+  const message = `*${title}*\n${body}`;
+  await sendGupshupWhatsApp(to, message);
+};
+
 const senders: Record<'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH', ChannelSender> = {
   EMAIL: consoleSender('EMAIL'),
   SMS: consoleSender('SMS'),
-  WHATSAPP: consoleSender('WHATSAPP'),
+  WHATSAPP: config.whatsappProvider === 'gupshup' ? gupshupSender : consoleSender('WHATSAPP'),
   PUSH: consoleSender('PUSH'),
 };
 

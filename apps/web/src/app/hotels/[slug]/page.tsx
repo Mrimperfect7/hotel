@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { formatINR, travelText } from '@/lib/format';
+
+// Leaflet requires browser DOM — must be loaded client-side only
+const HotelMap = dynamic(() => import('@/components/hotel-map'), { ssr: false });
 
 const API = process.env.NEXT_PUBLIC_API_ORIGIN ?? 'http://localhost:4000';
 
@@ -214,20 +218,21 @@ export default async function HotelDetailPage({ params }: { params: { slug: stri
         {/* Sidebar */}
         <aside className="space-y-4">
           <div className="card overflow-hidden">
-            <iframe
-              title={`Map of ${hotel.name}`}
-              className="h-48 w-full border-0"
-              loading="lazy"
-              src={`https://maps.google.com/maps?q=${hotel.lat},${hotel.lng}&z=15&output=embed`}
-            />
-            <div className="p-4">
+            {/* Leaflet + OpenStreetMap — 100% free, no API key */}
+            <div className="h-56 w-full">
+              <HotelMap lat={hotel.lat} lng={hotel.lng} hotelName={hotel.name} />
+            </div>
+            <div className="p-4 space-y-2">
+              <p className="text-xs text-temple-400 text-center">
+                🗺️ OpenStreetMap · 🛕 shows temple distance
+              </p>
               <a
                 className="btn-outline w-full"
-                href={`https://www.google.com/maps/dir/?api=1&destination=${hotel.lat},${hotel.lng}`}
+                href={`https://www.openstreetmap.org/directions?from=${hotel.lat},${hotel.lng}&to=${10.5945},${76.2075}`}
                 target="_blank"
                 rel="noreferrer"
               >
-                🧭 Get Directions
+                🧭 Get Directions to Temple
               </a>
             </div>
           </div>

@@ -8,10 +8,22 @@ import { fmtDate, formatINR, statusTone } from '@/lib/format';
 type OwnerBooking = {
   id: string; bookingCode: string; status: string;
   customer: { name: string; phone: string | null; email: string | null; whatsapp: string | null };
+  hotelName: string;
   roomName: string; checkIn: string; checkOut: string; nights: number;
   guests: number; roomsCount: number; amounts: { totalPaise: number };
   ownerPayoutPaise: number; specialRequests: string | null;
 };
+
+// Platform WhatsApp bot number (Gupshup sender number, without +)
+const PLATFORM_WA = (process.env.NEXT_PUBLIC_PLATFORM_WHATSAPP ?? '').replace(/\D/g, '');
+
+/** Build wa.me link to platform bot with booking context pre-filled */
+function platformWaLink(b: OwnerBooking): string {
+  const text = encodeURIComponent(
+    `Re: Booking ${b.bookingCode} — ${b.hotelName ?? b.roomName}\nGuest: ${b.customer.name}\nCheck-in: ${b.checkIn.slice(0, 10)}`
+  );
+  return `https://wa.me/${PLATFORM_WA}?text=${text}`;
+}
 
 const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'COMPLETED'] as const;
 
@@ -95,9 +107,9 @@ function Bookings() {
                       {b.status === 'CONFIRMED' && (
                         <button onClick={() => act(b.id, 'CANCEL')} className="btn bg-red-50 px-3 py-1 text-xs text-red-600">Cancel</button>
                       )}
-                      {b.customer.whatsapp && (
-                        <a href={`https://wa.me/91${b.customer.whatsapp.replace(/\D/g, '').slice(-10)}`} target="_blank" rel="noreferrer"
-                          className="btn bg-[#25D366]/10 px-3 py-1 text-xs text-[#128C7E]">💬 WhatsApp</a>
+                      {PLATFORM_WA && (
+                        <a href={platformWaLink(b)} target="_blank" rel="noreferrer"
+                          className="btn bg-[#25D366]/10 px-3 py-1 text-xs text-[#128C7E]">💬 Chat via Bot</a>
                       )}
                     </div>
                   </td>
