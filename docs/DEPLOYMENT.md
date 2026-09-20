@@ -11,6 +11,17 @@ network**, for any number of users.
 2. Create project "namma-guruvayoor" → copy the **connection string**
    (`postgresql://…neon.tech/neondb?sslmode=require`).
 
+### 1b. Neon pooled vs direct connection strings
+
+Neon gives you two strings — use each for the right job:
+
+- **Pooled** (host contains `-pooler`): for the deployed API's `DATABASE_URL`.
+  **Append `&pgbouncer=true`** so Prisma disables prepared statements
+  (PgBouncer transaction mode does not support them):
+  `postgresql://…-pooler….neon.tech/neondb?sslmode=require&pgbouncer=true`
+- **Direct** (no `-pooler`): for schema work from your PC — `db:push`,
+  `admin:create`, migrations. Prisma must not go through the pooler here.
+
 ### 2. Public API (Render)
 
 1. Push this repo to GitHub (done), sign up at **https://render.com**.
