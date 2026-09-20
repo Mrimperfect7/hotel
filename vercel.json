@@ -1,18 +1,12 @@
 {
   "version": 2,
-  "buildCommand": "npm run vercel:build",
+  "buildCommand": "node scripts/build-vercel.mjs",
   "installCommand": "npm install",
-  "outputDirectory": "apps/api/dist",
-  "builds": [
+  "outputDirectory": "dist",
+  "rewrites": [
     {
-      "src": "apps/api/dist/index.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "apps/api/dist/index.js"
+      "source": "/(.*)",
+      "destination": "/api/index.js"
     }
   ]
 }
