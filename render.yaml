@@ -17,7 +17,7 @@ services:
       - key: REFRESH_TOKEN_SECRET
         generateValue: true
       - key: WEB_ORIGIN
-        value: http://localhost:3000 # change to your deployed web URL
+        value: https://nammaguruvayoor.vercel.app # comma-separated list allowed
       - key: PAYMENT_MOCK
         value: "1" # switch to "0" after adding real Razorpay keys
       - key: NODE_ENV
