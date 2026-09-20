@@ -6,11 +6,12 @@ COPY apps/api/package.json apps/api/
 COPY packages/config/package.json packages/config/
 COPY packages/types/package.json packages/types/
 COPY packages/database/package.json packages/database/
-RUN npm ci --workspace @gsv/api --include-workspace-root || npm install
+RUN npm ci --workspace @gsv/api --workspace @gsv/database --include-workspace-root || npm install
 COPY tsconfig.base.json ./
 COPY apps/api apps/api
 COPY packages packages
-RUN npm run build -w @gsv/config && npm run build -w @gsv/types && npm run build -w @gsv/database && npm run build -w @gsv/api
+# Generate the Prisma client BEFORE tsc builds the packages that import it.
+RUN npm run db:generate -w @gsv/database && npm run build -w @gsv/config && npm run build -w @gsv/types && npm run build -w @gsv/database && npm run build -w @gsv/api
 
 FROM node:20-alpine
 WORKDIR /app
