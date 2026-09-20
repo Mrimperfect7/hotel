@@ -10,6 +10,7 @@
 import { prisma, type NotificationType } from '@gsv/database';
 import { config } from '@gsv/config';
 import { sendGupshupWhatsApp } from './whatsapp-gupshup.js';
+import { sendFirebasePush } from './push-firebase.js';
 
 export type NotifyInput = {
   userId: string;
@@ -35,11 +36,16 @@ const gupshupSender: ChannelSender = async (to, title, body) => {
   await sendGupshupWhatsApp(to, message);
 };
 
+/** Firebase Cloud Messaging push sender */
+const pushSender: ChannelSender = async (to, title, body, meta) => {
+  await sendFirebasePush(to, title, body, meta);
+};
+
 const senders: Record<'EMAIL' | 'SMS' | 'WHATSAPP' | 'PUSH', ChannelSender> = {
   EMAIL: consoleSender('EMAIL'),
   SMS: consoleSender('SMS'),
   WHATSAPP: config.whatsappProvider === 'gupshup' ? gupshupSender : consoleSender('WHATSAPP'),
-  PUSH: consoleSender('PUSH'),
+  PUSH: pushSender,
 };
 
 export async function notify(input: NotifyInput): Promise<void> {

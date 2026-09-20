@@ -88,5 +88,10 @@ export const config = (() => {
   emailProvider: env('EMAIL_PROVIDER', 'console')!,
   smsProvider: env('SMS_PROVIDER', 'console')!,
   whatsappProvider: env('WHATSAPP_PROVIDER', 'console')!,
+  firebase: {
+    projectId: env('FIREBASE_PROJECT_ID', ''),
+    clientEmail: env('FIREBASE_CLIENT_EMAIL', ''),
+    privateKey: env('FIREBASE_PRIVATE_KEY', ''),
+  },
   } as const;
 })();
