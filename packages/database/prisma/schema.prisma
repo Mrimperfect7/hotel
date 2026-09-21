@@ -44,6 +44,7 @@ enum HotelStatus {
 
 enum BookingStatus {
   PENDING
+  ACCEPTED
   CONFIRMED
   REJECTED
   CANCELLED
@@ -317,30 +318,46 @@ model HotelAmenity {
 }
 
 model RoomType {
-  id           String  @id @default(uuid())
-  hotelId      String
-  name         String  // Deluxe AC Room…
-  slug         String
-  description  String? @db.Text
-  basePricePaise Int
-  maxOccupancy Int     @default(2)
-  bedType      String  @default("Queen")
-  roomSizeSqft Int?
-  acAvailable  Boolean @default(false)
-  totalRooms   Int     @default(1)
-  blockedRooms Int     @default(0) // maintenance etc.
-  images       Json?   // [{url, alt}]
-  amenities    RoomAmenity[]
-  bookings     BookingRoom[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
 
-  hotel Hotel @relation(fields: [hotelId], references: [id])
+  id              String           @id @default(uuid())
+  hotelId         String
+  name            String           // Deluxe AC Room…
+  slug            String
+  description     String?          @db.Text
+  basePricePaise  Int
+  maxOccupancy    Int              @default(2)
+  bedType         String           @default("Queen")
+  roomSizeSqft    Int?
+  acAvailable     Boolean          @default(true)
+  totalRooms      Int              @default(1)
+  blockedRooms    Int              @default(0) // maintenance etc.
+  images          Json?            // [{url, alt}]
+  amenities       RoomAmenity[]
+  bookings        BookingRoom[]
+  inventoryBlocks InventoryBlock[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
 
   @@unique([hotelId, slug])
   @@index([hotelId, deletedAt])
   @@index([basePricePaise])
+}
+
+model InventoryBlock {
+  id           String    @id @default(uuid())
+  roomTypeId   String
+  roomType     RoomType  @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  date         DateTime  @db.Date
+  blockedCount Int
+  reason       String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([roomTypeId, date])
 }
 
 model RoomAmenity {

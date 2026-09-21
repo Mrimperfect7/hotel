@@ -9,7 +9,7 @@ export declare const HOTEL_STATUSES: readonly ["PENDING", "UNDER_REVIEW", "APPRO
 export type HotelStatus = (typeof HOTEL_STATUSES)[number];
 /** Statuses in which a hotel is publicly visible AND bookable. */
 export declare const PUBLIC_HOTEL_STATUSES: readonly HotelStatus[];
-export declare const BOOKING_STATUSES: readonly ["PENDING", "CONFIRMED", "REJECTED", "CANCELLED", "COMPLETED", "NO_SHOW"];
+export declare const BOOKING_STATUSES: readonly ["PENDING", "ACCEPTED", "CONFIRMED", "REJECTED", "CANCELLED", "COMPLETED", "NO_SHOW"];
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 /** Booking statuses that hold inventory. */
 export declare const INVENTORY_HOLDING_STATUSES: readonly BookingStatus[];
@@ -32,13 +32,12 @@ export declare function paiseToRupees(paise: number): number;
 export declare function formatINR(paise: number): string;
 /**
  * Server-side price calculation. Client-supplied prices are NEVER trusted.
- * GST for hotel rooms ≤ ₹7,500/night is 12%; above that 18% (Indian tax rule).
+ * GST is no longer applied (removed per platform requirements).
  */
 export declare function calculatePrice(opts: {
     pricePerNightPaise: number;
     nights: number;
     rooms: number;
-    taxBps?: number;
 }): {
     subtotalPaise: number;
     taxPaise: number;

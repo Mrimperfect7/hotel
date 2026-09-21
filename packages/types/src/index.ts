@@ -17,12 +17,12 @@ export type HotelStatus = (typeof HOTEL_STATUSES)[number];
 export const PUBLIC_HOTEL_STATUSES: readonly HotelStatus[] = ['APPROVED'];
 
 export const BOOKING_STATUSES = [
-  'PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'COMPLETED', 'NO_SHOW',
+  'PENDING', 'ACCEPTED', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'COMPLETED', 'NO_SHOW',
 ] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
 /** Booking statuses that hold inventory. */
-export const INVENTORY_HOLDING_STATUSES: readonly BookingStatus[] = ['PENDING', 'CONFIRMED'];
+export const INVENTORY_HOLDING_STATUSES: readonly BookingStatus[] = ['PENDING', 'ACCEPTED', 'CONFIRMED'];
 
 export const PAYMENT_STATUSES = [
   'INITIATED', 'AUTHORIZED', 'CAPTURED', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED',
@@ -37,7 +37,8 @@ export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
  *   CONFIRMED → CANCELLED | COMPLETED | NO_SHOW
  */
 export const BOOKING_TRANSITIONS: Record<BookingStatus, readonly BookingStatus[]> = {
-  PENDING: ['CONFIRMED', 'REJECTED', 'CANCELLED'],
+  PENDING: ['ACCEPTED', 'REJECTED', 'CANCELLED'],
+  ACCEPTED: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['CANCELLED', 'COMPLETED', 'NO_SHOW'],
   REJECTED: [],
   CANCELLED: [],
@@ -53,9 +54,11 @@ export function canTransition(from: BookingStatus, to: BookingStatus): boolean {
 export type Actor = 'CUSTOMER' | 'OWNER' | 'ADMIN' | 'SYSTEM';
 
 export const TRANSITION_ACTORS: Record<string, readonly Actor[]> = {
-  'PENDING->CONFIRMED': ['OWNER', 'ADMIN'],
+  'PENDING->ACCEPTED': ['OWNER', 'ADMIN'],
   'PENDING->REJECTED': ['OWNER', 'ADMIN'],
   'PENDING->CANCELLED': ['CUSTOMER', 'OWNER', 'ADMIN'],
+  'ACCEPTED->CONFIRMED': ['ADMIN', 'SYSTEM'],
+  'ACCEPTED->CANCELLED': ['CUSTOMER', 'OWNER', 'ADMIN'],
   'CONFIRMED->CANCELLED': ['CUSTOMER', 'OWNER', 'ADMIN'],
   'CONFIRMED->COMPLETED': ['OWNER', 'ADMIN', 'SYSTEM'],
   'CONFIRMED->NO_SHOW': ['OWNER', 'ADMIN'],

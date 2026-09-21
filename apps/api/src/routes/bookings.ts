@@ -296,8 +296,8 @@ bookingsRouter.post(
   requireAuth,
   asyncH(async (req, res) => {
     const { action, reason } = transitionSchema.parse(req.body);
-    const target: Record<string, 'CONFIRMED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'> = {
-      CONFIRM: 'CONFIRMED', REJECT: 'REJECTED', CANCEL: 'CANCELLED', COMPLETE: 'COMPLETED', NO_SHOW: 'NO_SHOW',
+    const target: Record<string, 'ACCEPTED' | 'CONFIRMED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'> = {
+      CONFIRM: 'ACCEPTED', REJECT: 'REJECTED', CANCEL: 'CANCELLED', COMPLETE: 'COMPLETED', NO_SHOW: 'NO_SHOW',
     };
     if (!target[action]) throw ApiError.badRequest('Unknown action', 'UNKNOWN_ACTION');
     const to = target[action];
@@ -332,7 +332,8 @@ bookingsRouter.post(
     // Notifications per transition.
     const customerId = booking.customerId;
     if (customerId) {
-      const map = {
+      const map: Record<string, any> = {
+        ACCEPTED: { type: 'BOOKING_CONFIRMED' as const, title: `Payment Required — ${booking.bookingCode}`, body: `${booking.hotel.name} accepted your request. Please complete payment to confirm.` },
         CONFIRMED: { type: 'BOOKING_CONFIRMED' as const, title: `Booking confirmed — ${booking.bookingCode}`, body: `${booking.hotel.name} confirmed your stay. See you soon! 🙏` },
         REJECTED: { type: 'BOOKING_REJECTED' as const, title: `Booking declined — ${booking.bookingCode}`, body: `The hotel could not accept this request. ${reason ?? ''}` },
         CANCELLED: { type: 'BOOKING_CANCELLED' as const, title: `Booking cancelled — ${booking.bookingCode}`, body: `Your booking at ${booking.hotel.name} was cancelled by the ${actor.toLowerCase()}.` },

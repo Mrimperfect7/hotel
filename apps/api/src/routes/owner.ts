@@ -150,16 +150,17 @@ ownerRouter.patch(
     if (!booking) throw ApiError.notFound('Booking not found');
     await assertOwnsHotel(req.auth!.id, booking.hotelId);
 
-    const transitions: Record<string, 'CONFIRMED' | 'REJECTED' | 'CANCELLED'> = {
-      CONFIRM: 'CONFIRMED', REJECT: 'REJECTED', CANCEL: 'CANCELLED',
+    const transitions: Record<string, 'ACCEPTED' | 'REJECTED' | 'CANCELLED'> = {
+      CONFIRM: 'ACCEPTED', REJECT: 'REJECTED', CANCEL: 'CANCELLED',
     };
     const to = transitions[action];
     if (!to) throw ApiError.badRequest('Unknown action', 'UNKNOWN_ACTION');
 
     const legal: Record<string, string[]> = {
-      'PENDING->CONFIRMED': ['CONFIRMED'],
+      'PENDING->ACCEPTED': ['ACCEPTED'],
       'PENDING->REJECTED': ['REJECTED'],
       'PENDING->CANCELLED': ['CANCELLED'],
+      'ACCEPTED->CANCELLED': ['CANCELLED'],
       'CONFIRMED->CANCELLED': ['CANCELLED'],
     };
     if (!legal[`${booking.status}->${to}`]) {
@@ -171,7 +172,6 @@ ownerRouter.patch(
       where: { id: booking.id },
       data: {
         status: to,
-        ...(to === 'CONFIRMED' ? { confirmedAt: now } : {}),
         ...(to === 'REJECTED' ? { rejectedAt: now, cancelReason: reason } : {}),
         ...(to === 'CANCELLED' ? { cancelledAt: now, cancelledBy: 'OWNER', cancelReason: reason } : {}),
       },
@@ -179,12 +179,12 @@ ownerRouter.patch(
 
     if (booking.customerId) {
       const titles: Record<string, string> = {
-        CONFIRMED: `Booking confirmed — ${booking.bookingCode}`,
+        ACCEPTED: `Payment Required — ${booking.bookingCode}`,
         REJECTED: `Booking declined — ${booking.bookingCode}`,
         CANCELLED: `Booking cancelled — ${booking.bookingCode}`,
       };
       const bodies: Record<string, string> = {
-        CONFIRMED: `${booking.hotel.name} confirmed your stay. Show booking ${booking.bookingCode} at check-in.`,
+        ACCEPTED: `${booking.hotel.name} accepted your request. Please complete payment to confirm your booking: https://nammaguruvayoor.test/booking/${booking.id}/pay`,
         REJECTED: `The hotel could not accept this request.${reason ? ' Reason: ' + reason : ''}`,
         CANCELLED: `Your booking was cancelled by the hotel.${reason ? ' Reason: ' + reason : ''}`,
       };
@@ -192,7 +192,7 @@ ownerRouter.patch(
       const body: string = bodies[to] ?? `Your booking ${booking.bookingCode} is now ${to.toLowerCase()}.`;
       await notify({
         userId: booking.customerId,
-        type: to === 'CONFIRMED' ? 'BOOKING_CONFIRMED' : to === 'REJECTED' ? 'BOOKING_REJECTED' : 'BOOKING_CANCELLED',
+        type: to === 'ACCEPTED' ? 'BOOKING_CONFIRMED' : to === 'REJECTED' ? 'BOOKING_REJECTED' : 'BOOKING_CANCELLED',
         title,
         body,
         channels: ['IN_APP', 'PUSH', 'SMS'],
@@ -300,9 +300,16 @@ ownerRouter.get(
     const holds = await prisma.bookingRoom.findMany({
       where: {
         roomTypeId: { in: rooms.map((r) => r.id) },
-        booking: { status: { in: ['PENDING', 'CONFIRMED'] }, checkIn: { lt: end }, checkOut: { gt: start } },
+        booking: { status: { in: ['PENDING', 'ACCEPTED', 'CONFIRMED'] }, checkIn: { lt: end }, checkOut: { gt: start } },
       },
       select: { roomTypeId: true, roomsCount: true, booking: { select: { checkIn: true, checkOut: true } } },
+    });
+    
+    const blocks = await prisma.inventoryBlock.findMany({
+      where: {
+        roomTypeId: { in: rooms.map((r) => r.id) },
+        date: { gte: start, lt: end },
+      }
     });
 
     const days: string[] = [];
@@ -314,11 +321,43 @@ ownerRouter.get(
         const booked = holds
           .filter((h) => h.roomTypeId === r.id && h.booking.checkIn <= new Date(day) && h.booking.checkOut > new Date(day))
           .reduce((s, h) => s + h.roomsCount, 0);
-        return { roomTypeId: r.id, name: r.name, sellable: r.totalRooms - r.blockedRooms, booked, available: Math.max(0, r.totalRooms - r.blockedRooms - booked) };
+        const block = blocks.find((b) => b.roomTypeId === r.id && b.date.toISOString().slice(0, 10) === day);
+        const sellable = r.totalRooms - r.blockedRooms;
+        const available = Math.max(0, sellable - booked - (block?.blockedCount ?? 0));
+        return { roomTypeId: r.id, name: r.name, sellable, booked, blocked: block?.blockedCount ?? 0, available };
       }),
     }));
 
     res.json({ month: monthStr, days: calendar });
+  })
+);
+
+/** POST /api/owner/availability/block — Add or update manual inventory blocks */
+ownerRouter.post(
+  '/availability/block',
+  asyncH(async (req, res) => {
+    const data = z.object({
+      hotelId: z.string().uuid(),
+      roomTypeId: z.string().uuid(),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      blockedCount: z.number().int().min(0),
+    }).parse(req.body);
+    
+    await assertOwnsHotel(req.auth!.id, data.hotelId);
+    
+    if (data.blockedCount === 0) {
+      await prisma.inventoryBlock.deleteMany({
+        where: { roomTypeId: data.roomTypeId, date: new Date(data.date) }
+      });
+    } else {
+      await prisma.inventoryBlock.upsert({
+        where: { roomTypeId_date: { roomTypeId: data.roomTypeId, date: new Date(data.date) } },
+        update: { blockedCount: data.blockedCount },
+        create: { roomTypeId: data.roomTypeId, date: new Date(data.date), blockedCount: data.blockedCount }
+      });
+    }
+    
+    res.json({ success: true });
   })
 );
 

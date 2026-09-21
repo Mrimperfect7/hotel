@@ -11,10 +11,10 @@ export const HOTEL_STATUSES = [
 /** Statuses in which a hotel is publicly visible AND bookable. */
 export const PUBLIC_HOTEL_STATUSES = ['APPROVED'];
 export const BOOKING_STATUSES = [
-    'PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'COMPLETED', 'NO_SHOW',
+    'PENDING', 'ACCEPTED', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'COMPLETED', 'NO_SHOW',
 ];
 /** Booking statuses that hold inventory. */
-export const INVENTORY_HOLDING_STATUSES = ['PENDING', 'CONFIRMED'];
+export const INVENTORY_HOLDING_STATUSES = ['PENDING', 'ACCEPTED', 'CONFIRMED'];
 export const PAYMENT_STATUSES = [
     'INITIATED', 'AUTHORIZED', 'CAPTURED', 'FAILED', 'REFUNDED', 'PARTIALLY_REFUNDED',
 ];
@@ -25,7 +25,8 @@ export const PAYMENT_STATUSES = [
  *   CONFIRMED → CANCELLED | COMPLETED | NO_SHOW
  */
 export const BOOKING_TRANSITIONS = {
-    PENDING: ['CONFIRMED', 'REJECTED', 'CANCELLED'],
+    PENDING: ['ACCEPTED', 'REJECTED', 'CANCELLED'],
+    ACCEPTED: ['CONFIRMED', 'CANCELLED'],
     CONFIRMED: ['CANCELLED', 'COMPLETED', 'NO_SHOW'],
     REJECTED: [],
     CANCELLED: [],
@@ -36,9 +37,11 @@ export function canTransition(from, to) {
     return BOOKING_TRANSITIONS[from]?.includes(to) ?? false;
 }
 export const TRANSITION_ACTORS = {
-    'PENDING->CONFIRMED': ['OWNER', 'ADMIN'],
+    'PENDING->ACCEPTED': ['OWNER', 'ADMIN'],
     'PENDING->REJECTED': ['OWNER', 'ADMIN'],
     'PENDING->CANCELLED': ['CUSTOMER', 'OWNER', 'ADMIN'],
+    'ACCEPTED->CONFIRMED': ['ADMIN', 'SYSTEM'],
+    'ACCEPTED->CANCELLED': ['CUSTOMER', 'OWNER', 'ADMIN'],
     'CONFIRMED->CANCELLED': ['CUSTOMER', 'OWNER', 'ADMIN'],
     'CONFIRMED->COMPLETED': ['OWNER', 'ADMIN', 'SYSTEM'],
     'CONFIRMED->NO_SHOW': ['OWNER', 'ADMIN'],
@@ -63,13 +66,12 @@ export function formatINR(paise) {
 }
 /**
  * Server-side price calculation. Client-supplied prices are NEVER trusted.
- * GST for hotel rooms ≤ ₹7,500/night is 12%; above that 18% (Indian tax rule).
+ * GST is no longer applied (removed per platform requirements).
  */
 export function calculatePrice(opts) {
     const { pricePerNightPaise, nights, rooms } = opts;
-    const taxBps = opts.taxBps ?? (pricePerNightPaise > 750000 ? 1800 : 1200);
     const subtotalPaise = pricePerNightPaise * nights * rooms;
-    const taxPaise = Math.round((subtotalPaise * taxBps) / 10000);
+    const taxPaise = 0;
     return { subtotalPaise, taxPaise, totalPaise: subtotalPaise + taxPaise };
 }
 /** Platform commission split from the subtotal (before tax). */

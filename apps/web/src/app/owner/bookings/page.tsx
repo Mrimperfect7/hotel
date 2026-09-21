@@ -25,7 +25,7 @@ function platformWaLink(b: OwnerBooking): string {
   return `https://wa.me/${PLATFORM_WA}?text=${text}`;
 }
 
-const STATUSES = ['ALL', 'PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'COMPLETED'] as const;
+const STATUSES = ['ALL', 'PENDING', 'ACCEPTED', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'COMPLETED'] as const;
 
 function Bookings() {
   const params = useSearchParams();
@@ -100,11 +100,11 @@ function Bookings() {
                     <div className="flex flex-col gap-1.5">
                       {b.status === 'PENDING' && (
                         <>
-                          <button onClick={() => act(b.id, 'CONFIRM')} className="btn bg-kerala-500 px-3 py-1 text-xs text-white">✓ Confirm</button>
+                          <button onClick={() => act(b.id, 'CONFIRM')} className="btn bg-kerala-500 px-3 py-1 text-xs text-white">✓ Accept</button>
                           <button onClick={() => act(b.id, 'REJECT')} className="btn bg-red-50 px-3 py-1 text-xs text-red-600">✕ Reject</button>
                         </>
                       )}
-                      {b.status === 'CONFIRMED' && (
+                      {(b.status === 'CONFIRMED' || b.status === 'ACCEPTED') && (
                         <button onClick={() => act(b.id, 'CANCEL')} className="btn bg-red-50 px-3 py-1 text-xs text-red-600">Cancel</button>
                       )}
                       {PLATFORM_WA && (

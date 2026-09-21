@@ -438,6 +438,44 @@ adminRouter.get(
 
 // --- NEW SERVICE APPROVALS ---
 
+adminRouter.post(
+  '/users',
+  asyncH(async (req, res) => {
+    const { name, email, phone, password, role } = z.object({
+      name: z.string().min(2),
+      email: z.string().email().optional().or(z.literal('')),
+      phone: z.string().optional().or(z.literal('')),
+      password: z.string().min(6),
+      role: z.enum(['GUIDE', 'RESTAURANT_OWNER', 'HOTEL_OWNER', 'DRIVER', 'CUSTOMER']),
+    }).parse(req.body);
+
+    if (!email && !phone) throw ApiError.badRequest('Email or phone is required');
+    const { hashPassword } = await import('../lib/auth.js');
+    const passwordHash = await hashPassword(password);
+    
+    // Convert empty strings to undefined to avoid unique constraint issues
+    const safeEmail = email || undefined;
+    const safePhone = phone || undefined;
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email: safeEmail,
+        phone: safePhone,
+        passwordHash,
+        role,
+        ...(role === 'HOTEL_OWNER' && { ownerProfile: { create: { ownerName: name, phone: safePhone || '', email: safeEmail || '' } } }),
+        ...(role === 'GUIDE' && { guideProfile: { create: { name, phone: safePhone || '' } } }),
+        ...(role === 'DRIVER' && { driverProfile: { create: { name, phone: safePhone || '', licenseNumber: 'PENDING' } } }),
+        ...(role === 'RESTAURANT_OWNER' && { restaurantProfile: { create: { name, phone: safePhone || '', slug: `rest-${Date.now()}`, address: 'PENDING' } } }),
+      },
+    });
+
+    await audit(req, 'USER_CREATED', 'User', user.id, { role });
+    res.json({ user });
+  })
+);
+
 const providerReviewSchema = z.object({
   action: z.enum(['APPROVE', 'REJECT', 'SUSPEND', 'REACTIVATE', 'UNDER_REVIEW']),
   reason: z.string().max(1000).optional(),

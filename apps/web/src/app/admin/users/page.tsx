@@ -9,6 +9,10 @@ type User = { id: string; name: string; email: string; phone: string | null; rol
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [role, setRole] = useState('');
+  
+  const [showCreate, setShowCreate] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', role: 'GUIDE' });
 
   const load = useCallback(() => {
     api.get<{ users: User[] }>(`/api/admin/users${role ? `?role=${role}` : ''}`, true)
@@ -22,16 +26,40 @@ export default function AdminUsersPage() {
     load();
   }
 
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await api.post('/api/admin/users', formData, true);
+      setShowCreate(false);
+      setFormData({ name: '', email: '', phone: '', password: '', role: 'GUIDE' });
+      load();
+    } catch (err: any) {
+      alert(err.message || 'Error creating user');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold text-temple-700">Users</h1>
-        <select className="input w-auto" value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="">All roles</option>
-          <option value="CUSTOMER">Customers</option>
-          <option value="HOTEL_OWNER">Hotel owners</option>
-        </select>
+        <div className="flex items-center gap-3">
+          <select className="input w-auto" value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="">All roles</option>
+            <option value="CUSTOMER">Customers</option>
+            <option value="HOTEL_OWNER">Hotel owners</option>
+            <option value="GUIDE">Guides</option>
+            <option value="DRIVER">Drivers</option>
+            <option value="RESTAURANT_OWNER">Restaurant owners</option>
+          </select>
+          <button onClick={() => setShowCreate(true)} className="btn-primary">
+            + Create Account
+          </button>
+        </div>
       </div>
+      
       <div className="card mt-4 overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead>
@@ -64,6 +92,48 @@ export default function AdminUsersPage() {
           </tbody>
         </table>
       </div>
+
+      {showCreate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <form onSubmit={handleCreate} className="card w-full max-w-md p-6 shadow-2xl">
+            <h2 className="font-bold text-temple-900 text-xl">Create Account</h2>
+            
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="label">Name</label>
+                <input required type="text" className="input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">Email</label>
+                <input type="email" className="input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">Phone</label>
+                <input type="tel" className="input" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">Password</label>
+                <input required type="password" minLength={6} className="input" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">Role</label>
+                <select className="input" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}>
+                  <option value="GUIDE">Guide</option>
+                  <option value="DRIVER">Driver</option>
+                  <option value="RESTAURANT_OWNER">Restaurant Owner</option>
+                  <option value="HOTEL_OWNER">Hotel Owner</option>
+                  <option value="CUSTOMER">Customer</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setShowCreate(false)} className="btn bg-temple-100 text-temple-700">Cancel</button>
+              <button type="submit" disabled={busy} className="btn-primary">{busy ? 'Creating...' : 'Create Account'}</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

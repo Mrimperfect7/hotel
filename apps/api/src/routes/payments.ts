@@ -29,8 +29,8 @@ paymentsRouter.post(
     });
     if (!booking) throw ApiError.notFound('Booking not found');
     if (booking.customerId !== req.auth!.id) throw ApiError.forbidden();
-    if (booking.status !== 'PENDING') {
-      throw ApiError.conflict(`Cannot pay for a ${booking.status.toLowerCase()} booking`, 'BOOKING_NOT_PAYABLE');
+    if (booking.status !== 'ACCEPTED') {
+      throw ApiError.conflict(`Cannot pay for a ${booking.status.toLowerCase()} booking. Please wait for the hotel to accept your request.`, 'BOOKING_NOT_PAYABLE');
     }
 
     const upiUri = generateUpiUri({
