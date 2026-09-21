@@ -94,3 +94,48 @@ guidesRouter.post('/:id/book', requireAuth, asyncH(async (req, res) => {
 
   res.json({ data: booking });
 }));
+
+// GET /api/guides/dashboard - Guide owner dashboard
+guidesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
+  const guide = await prisma.guide.findUnique({
+    where: { userId: req.user!.id }
+  });
+  if (!guide) throw new ApiError('Not registered as guide', 403);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const bookings = await prisma.guideBooking.findMany({
+    where: { guideId: guide.id },
+    include: { customer: { select: { name: true, phone: true } } },
+    orderBy: { date: 'asc' }
+  });
+
+  const pending = bookings.filter(b => b.status === 'PENDING').length;
+  const upcoming = bookings.filter(b => b.status === 'CONFIRMED' && b.date >= today).length;
+  const revenuePaise = bookings.filter(b => b.status === 'COMPLETED').reduce((acc, b) => acc + b.totalPaise, 0);
+
+  res.json({
+    guide,
+    stats: { pending, upcoming, revenuePaise },
+    recentBookings: bookings.slice(0, 10)
+  });
+}));
+
+// PATCH /api/guides/bookings/:id - Accept/Reject booking
+guidesRouter.patch('/bookings/:id', requireAuth, asyncH(async (req, res) => {
+  const schema = z.object({
+    status: z.enum(['CONFIRMED', 'REJECTED', 'COMPLETED'])
+  });
+  const { status } = schema.parse(req.body);
+
+  const guide = await prisma.guide.findUnique({ where: { userId: req.user!.id } });
+  if (!guide) throw new ApiError('Not a guide', 403);
+
+  const booking = await prisma.guideBooking.updateMany({
+    where: { id: req.params.id, guideId: guide.id },
+    data: { status }
+  });
+
+  res.json({ success: true });
+}));

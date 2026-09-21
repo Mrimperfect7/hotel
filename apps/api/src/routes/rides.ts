@@ -101,3 +101,47 @@ ridesRouter.patch('/:id/status', requireAuth, asyncH(async (req, res) => {
   });
   res.json({ data: ride });
 }));
+
+// GET /api/rides/dashboard - Driver dashboard
+ridesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
+  const driver = await prisma.driver.findUnique({
+    where: { userId: req.user!.id },
+    include: { vehicle: true }
+  });
+  if (!driver) throw new ApiError('Not registered as driver', 403);
+
+  const rides = await prisma.ride.findMany({
+    where: { driverId: driver.id },
+    include: { customer: { select: { name: true, phone: true } } },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const availableRides = await prisma.ride.findMany({
+    where: { status: 'REQUESTED' },
+    include: { customer: { select: { name: true, phone: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 20
+  });
+
+  const completed = rides.filter(r => r.status === 'RIDE_COMPLETED').length;
+  const revenuePaise = rides.filter(r => r.status === 'RIDE_COMPLETED').reduce((acc, r) => acc + (r.finalPaise || r.estimatedPaise || 0), 0);
+  const activeRide = rides.find(r => ['DRIVER_ASSIGNED', 'DRIVER_ARRIVING', 'RIDE_STARTED'].includes(r.status));
+
+  res.json({
+    driver,
+    stats: { completed, revenuePaise },
+    activeRide: activeRide || null,
+    availableRides,
+    recentRides: rides.slice(0, 10)
+  });
+}));
+
+// PATCH /api/rides/online - Toggle online status
+ridesRouter.patch('/online', requireAuth, asyncH(async (req, res) => {
+  const { isOnline } = z.object({ isOnline: z.boolean() }).parse(req.body);
+  const driver = await prisma.driver.update({
+    where: { userId: req.user!.id },
+    data: { isOnline }
+  });
+  res.json({ isOnline: driver.isOnline });
+}));

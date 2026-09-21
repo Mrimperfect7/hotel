@@ -93,3 +93,32 @@ foodRouter.patch('/orders/:id', requireAuth, asyncH(async (req, res) => {
   });
   res.json({ data: order });
 }));
+
+// GET /api/food/dashboard - Restaurant dashboard
+foodRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { userId: req.user!.id }
+  });
+  if (!restaurant) throw new ApiError('Not registered as restaurant', 403);
+
+  const orders = await prisma.foodOrder.findMany({
+    where: { restaurantId: restaurant.id },
+    include: { 
+      customer: { select: { name: true, phone: true } },
+      items: { include: { menuItem: { select: { name: true } } } }
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 50
+  });
+
+  const activeOrders = orders.filter(o => !['DELIVERED', 'CANCELLED'].includes(o.status));
+  const completed = orders.filter(o => o.status === 'DELIVERED').length;
+  const revenuePaise = orders.filter(o => o.status === 'DELIVERED').reduce((acc, o) => acc + o.totalPaise, 0);
+
+  res.json({
+    restaurant,
+    stats: { active: activeOrders.length, completed, revenuePaise },
+    activeOrders,
+    recentOrders: orders.filter(o => ['DELIVERED', 'CANCELLED'].includes(o.status)).slice(0, 10)
+  });
+}));
