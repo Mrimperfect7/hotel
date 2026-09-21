@@ -26,13 +26,13 @@ foodRouter.post('/restaurants/register', requireAuth, asyncH(async (req, res) =>
   });
   const data = schema.parse(req.body);
 
-  if (req.user!.role === 'CUSTOMER') {
-    await prisma.user.update({ where: { id: req.user!.id }, data: { role: 'RESTAURANT_OWNER' } });
+  if (req.auth!.role === 'CUSTOMER') {
+    await prisma.user.update({ where: { id: req.auth!.id }, data: { role: 'RESTAURANT_OWNER' } });
   }
 
   const restaurant = await prisma.restaurant.create({
     data: {
-      userId: req.user!.id,
+      userId: req.auth!.id,
       ...data,
       status: 'PENDING'
     }
@@ -56,7 +56,7 @@ foodRouter.post('/orders', requireAuth, asyncH(async (req, res) => {
 
   const order = await prisma.foodOrder.create({
     data: {
-      customerId: req.user!.id,
+      customerId: req.auth!.id,
       restaurantId: data.restaurantId,
       deliveryAddress: data.deliveryAddress,
       totalPaise: data.totalPaise,
@@ -67,8 +67,8 @@ foodRouter.post('/orders', requireAuth, asyncH(async (req, res) => {
     }
   });
 
-  const trip = await prisma.trip.findFirst({ where: { customerId: req.user!.id } })
-    || await prisma.trip.create({ data: { customerId: req.user!.id, name: "My Guruvayoor Trip" } });
+  const trip = await prisma.trip.findFirst({ where: { customerId: req.auth!.id } })
+    || await prisma.trip.create({ data: { customerId: req.auth!.id, name: "My Guruvayoor Trip" } });
 
   await prisma.tripItem.create({
     data: {
@@ -97,9 +97,9 @@ foodRouter.patch('/orders/:id', requireAuth, asyncH(async (req, res) => {
 // GET /api/food/dashboard - Restaurant dashboard
 foodRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
   const restaurant = await prisma.restaurant.findUnique({
-    where: { userId: req.user!.id }
+    where: { userId: req.auth!.id }
   });
-  if (!restaurant) throw new ApiError('Not registered as restaurant', 403);
+  if (!restaurant) throw ApiError.forbidden('Not registered as restaurant');
 
   const orders = await prisma.foodOrder.findMany({
     where: { restaurantId: restaurant.id },

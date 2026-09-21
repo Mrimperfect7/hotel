@@ -21,7 +21,7 @@ guidesRouter.get('/:id', asyncH(async (req, res) => {
     where: { id: req.params.id },
     include: { user: { select: { name: true, avatarUrl: true } }, availabilities: true }
   });
-  if (!guide || guide.status !== 'APPROVED') throw new ApiError('Guide not found', 404);
+  if (!guide || guide.status !== 'APPROVED') throw ApiError.notFound('Guide not found');
   res.json({ data: guide });
 }));
 
@@ -38,14 +38,14 @@ guidesRouter.post('/register', requireAuth, asyncH(async (req, res) => {
   });
   const data = schema.parse(req.body);
 
-  if (req.user!.role === 'CUSTOMER') {
-    await prisma.user.update({ where: { id: req.user!.id }, data: { role: 'GUIDE' } });
+  if (req.auth!.role === 'CUSTOMER') {
+    await prisma.user.update({ where: { id: req.auth!.id }, data: { role: 'GUIDE' } });
   }
 
   const guide = await prisma.guide.create({
     data: {
-      userId: req.user!.id,
-      name: req.user!.name,
+      userId: req.auth!.id,
+      name: req.auth!.name,
       ...data,
       status: 'PENDING'
     }
@@ -67,8 +67,8 @@ guidesRouter.post('/:id/book', requireAuth, asyncH(async (req, res) => {
 
   const booking = await prisma.guideBooking.create({
     data: {
-      guideId: req.params.id,
-      customerId: req.user!.id,
+      guideId: req.params.id as string,
+      customerId: req.auth!.id,
       date: new Date(data.date),
       startTime: data.startTime,
       durationHours: data.durationHours,
@@ -78,8 +78,8 @@ guidesRouter.post('/:id/book', requireAuth, asyncH(async (req, res) => {
     }
   });
 
-  const trip = await prisma.trip.findFirst({ where: { customerId: req.user!.id } })
-    || await prisma.trip.create({ data: { customerId: req.user!.id, name: "My Guruvayoor Trip" } });
+  const trip = await prisma.trip.findFirst({ where: { customerId: req.auth!.id } })
+    || await prisma.trip.create({ data: { customerId: req.auth!.id, name: "My Guruvayoor Trip" } });
 
   await prisma.tripItem.create({
     data: {
@@ -98,9 +98,9 @@ guidesRouter.post('/:id/book', requireAuth, asyncH(async (req, res) => {
 // GET /api/guides/dashboard - Guide owner dashboard
 guidesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
   const guide = await prisma.guide.findUnique({
-    where: { userId: req.user!.id }
+    where: { userId: req.auth!.id }
   });
-  if (!guide) throw new ApiError('Not registered as guide', 403);
+  if (!guide) throw ApiError.forbidden('Not registered as guide');
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -129,8 +129,8 @@ guidesRouter.patch('/bookings/:id', requireAuth, asyncH(async (req, res) => {
   });
   const { status } = schema.parse(req.body);
 
-  const guide = await prisma.guide.findUnique({ where: { userId: req.user!.id } });
-  if (!guide) throw new ApiError('Not a guide', 403);
+  const guide = await prisma.guide.findUnique({ where: { userId: req.auth!.id } });
+  if (!guide) throw ApiError.forbidden('Not a guide');
 
   const booking = await prisma.guideBooking.updateMany({
     where: { id: req.params.id, guideId: guide.id },

@@ -9,20 +9,20 @@ export const tripsRouter = Router();
 tripsRouter.get('/me', requireAuth, asyncH(async (req, res) => {
   // Find customer's trip (or create one)
   let trip = await prisma.trip.findFirst({
-    where: { customerId: req.user!.id },
+    where: { customerId: req.auth!.id },
     include: { items: { orderBy: { dateTime: 'asc' } } }
   });
 
   if (!trip) {
     trip = await prisma.trip.create({
-      data: { customerId: req.user!.id, name: "My Guruvayoor Trip" },
+      data: { customerId: req.auth!.id, name: "My Guruvayoor Trip" },
       include: { items: true }
     });
   }
 
   // Also include hotel bookings directly if they aren't synced (legacy compatibility)
   const legacyBookings = await prisma.booking.findMany({
-    where: { customerId: req.user!.id, status: { in: ['CONFIRMED', 'PENDING'] } },
+    where: { customerId: req.auth!.id, status: { in: ['CONFIRMED', 'PENDING'] } },
     include: { hotel: true }
   });
   

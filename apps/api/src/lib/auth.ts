@@ -8,9 +8,11 @@ import { ApiError } from './errors.js';
 
 const BCRYPT_ROUNDS = 12;
 
+import type { Role } from '@prisma/client';
+
 export type AuthUser = {
   id: string;
-  role: 'CUSTOMER' | 'HOTEL_OWNER' | 'ADMIN' | 'SUPER_ADMIN';
+  role: Role;
   name: string;
   email: string | null;
   phone: string | null;

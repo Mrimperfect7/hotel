@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { Suspense, useEffect, useState } from 'react';
 import { api } from '@/lib/api';

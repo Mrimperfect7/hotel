@@ -316,7 +316,7 @@ adminRouter.get(
       include: {
         hotel: { select: { name: true, slug: true } },
         rooms: { include: { roomType: { select: { name: true } } } },
-        payments: { select: { status: true } },
+        payments: { select: { id: true, status: true, utr: true } },
         customer: { select: { name: true, phone: true, email: true } },
       },
     });
@@ -332,6 +332,8 @@ adminRouter.get(
         guests: b.guests, roomsCount: b.roomsCount,
         totalPaise: b.totalPaise, commissionPaise: b.commissionPaise,
         paymentStatus: b.payments[0]?.status ?? 'INITIATED',
+        paymentId: b.payments[0]?.id,
+        utr: b.payments[0]?.utr,
         createdAt: b.createdAt,
       })),
     });

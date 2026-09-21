@@ -3,9 +3,10 @@
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
-import { api, ApiError, getToken, setTokens } from '@/lib/api';
-import { formatINR, fmtDate } from '@/lib/format';
+import { api, ApiError, getToken } from '@/lib/api';
+import { formatINR } from '@/lib/format';
 import { calculatePrice } from '@gsv/types';
+import { QRCodeSVG } from 'qrcode.react';
 
 type RoomInfo = {
   id: string; name: string; basePricePaise: number; maxOccupancy: number; acAvailable: boolean;
@@ -35,6 +36,11 @@ function Checkout() {
   const [done, setDone] = useState<{ bookingCode: string; id: string } | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
   const [guest, setGuest] = useState({ name: '', phone: '', email: '' });
+  
+  // Payment state
+  const [paymentStep, setPaymentStep] = useState(false);
+  const [paymentData, setPaymentData] = useState<{ paymentId: string; upiUri: string; amountPaise: number } | null>(null);
+  const [utr, setUtr] = useState('');
 
   useEffect(() => {
     setLoggedIn(Boolean(getToken()));
@@ -57,7 +63,7 @@ function Checkout() {
     ? calculatePrice({ pricePerNightPaise: room.basePricePaise, nights, rooms })
     : { subtotalPaise: 0, taxPaise: 0, totalPaise: 0 };
 
-  async function submit(e: React.FormEvent) {
+  async function submitBooking(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setBusy(true);
@@ -67,7 +73,8 @@ function Checkout() {
         specialRequests: requests || undefined,
       };
       if (!loggedIn) payload.guest = guest;
-      const res = await api.post<{ bookingId: string; bookingCode: string; totals: { totalPaise: number } }>(
+      
+      const res = await api.post<{ bookingId: string; bookingCode: string }>(
         '/api/bookings', payload, loggedIn
       );
       setDone({ bookingCode: res.bookingCode, id: res.bookingId });
@@ -78,18 +85,97 @@ function Checkout() {
     }
   }
 
+  async function generatePayment() {
+    if (!done) return;
+    setBusy(true);
+    try {
+      const res = await api.post<{ paymentId: string; upiUri: string; amountPaise: number }>(
+        '/api/payments/create', { bookingId: done.id }, loggedIn
+      );
+      setPaymentData(res);
+      setPaymentStep(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Error generating payment link.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmPayment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!paymentData || utr.length < 12) return;
+    setBusy(true);
+    try {
+      await api.post('/api/payments/confirm', {
+        paymentId: paymentData.paymentId,
+        utr,
+      }, loggedIn);
+      window.location.href = `/booking/success?code=${done?.bookingCode}`;
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Error verifying payment.');
+      setBusy(false);
+    }
+  }
+
+  if (paymentStep && paymentData) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="font-display text-2xl font-bold text-temple-700 mb-2">Pay via UPI</h1>
+        <p className="text-temple-600 mb-6">Scan the QR code below with GPay, PhonePe, or Paytm to complete your booking.</p>
+        
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-temple-100 flex flex-col items-center">
+          <QRCodeSVG value={paymentData.upiUri} size={200} />
+          <p className="mt-4 text-xl font-bold text-temple-900">{formatINR(paymentData.amountPaise)}</p>
+          
+          <a href={paymentData.upiUri} className="mt-4 btn bg-kerala-500 text-white w-full py-2 block md:hidden">
+            Open UPI App
+          </a>
+        </div>
+
+        <form onSubmit={confirmPayment} className="mt-8 card p-6 text-left">
+          <h2 className="font-bold text-temple-700 mb-2">Enter UTR / Reference No.</h2>
+          <p className="text-xs text-temple-500 mb-4">After paying, enter the 12-digit UPI Reference number to confirm your booking.</p>
+          
+          <input 
+            type="text" 
+            required 
+            minLength={12} 
+            maxLength={20}
+            placeholder="e.g. 3145XXXXXXXX" 
+            className="input w-full text-center text-lg tracking-widest font-mono"
+            value={utr}
+            onChange={(e) => setUtr(e.target.value.replace(/[^0-9]/g, ''))}
+          />
+          
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
+          <button disabled={busy || utr.length < 12} type="submit" className="btn-gold mt-4 w-full py-3">
+            {busy ? 'Verifying...' : 'Submit Payment'}
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   if (done) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
         <div className="text-5xl">🙏</div>
-        <h1 className="mt-4 font-display text-2xl font-bold text-temple-700">Booking request sent!</h1>
+        <h1 className="mt-4 font-display text-2xl font-bold text-temple-700">Booking request saved!</h1>
         <p className="mt-2 text-temple-600">
-          Your booking ID is <strong className="text-gold-700">{done.bookingCode}</strong>. The hotel has been
-          notified and will confirm shortly.
+          Your booking ID is <strong className="text-gold-700">{done.bookingCode}</strong>.
         </p>
+        
+        <div className="mt-8 p-6 bg-gold-50 border border-gold-200 rounded-2xl">
+          <h2 className="font-bold text-temple-900 mb-2">Complete Payment to Confirm</h2>
+          <p className="text-sm text-temple-600 mb-4">You must pay {formatINR(estimate.totalPaise)} to confirm your room.</p>
+          <button onClick={generatePayment} disabled={busy} className="btn-gold w-full py-3 text-lg">
+            Pay Now (Zero Fees)
+          </button>
+        </div>
+        
         <div className="mt-6 flex justify-center gap-3">
-          <Link href={`/booking/success?code=${done.bookingCode}`} className="btn-primary">View Confirmation</Link>
-          <Link href="/my-bookings" className="btn-outline">My Bookings</Link>
+          <Link href="/my-bookings" className="btn-outline">Pay Later</Link>
         </div>
       </div>
     );
@@ -106,7 +192,7 @@ function Checkout() {
   }
 
   return (
-    <form onSubmit={submit} className="mx-auto grid max-w-5xl gap-6 px-4 py-8 lg:grid-cols-3">
+    <form onSubmit={submitBooking} className="mx-auto grid max-w-5xl gap-6 px-4 py-8 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
         <h1 className="font-display text-2xl font-bold text-temple-700">
           {hotel?.name ?? 'Complete your booking'}
@@ -181,7 +267,7 @@ function Checkout() {
             <dd className="font-bold text-gold-700">{formatINR(estimate.totalPaise)}</dd>
           </div>
         </dl>
-        <p className="mt-2 text-[11px] text-temple-400">Final amount is confirmed by the server at booking time. Pay at the hotel or online once confirmed.</p>
+        <p className="mt-2 text-[11px] text-temple-400">Final amount is confirmed by the server at booking time.</p>
         {hotel && (
           <p className="mt-3 text-xs text-temple-500">
             Check-in {hotel.checkInTime} · Check-out {hotel.checkOutTime}
@@ -189,7 +275,7 @@ function Checkout() {
         )}
         {error && <p className="mt-3 rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</p>}
         <button disabled={busy} className="btn-gold mt-4 w-full py-3 text-base">
-          {busy ? 'Sending request…' : 'Request Booking'}
+          {busy ? 'Sending request…' : 'Continue to Payment'}
         </button>
       </aside>
     </form>

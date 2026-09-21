@@ -54,6 +54,7 @@ enum BookingStatus {
 enum PaymentStatus {
   INITIATED
   AUTHORIZED
+  PENDING_VERIFICATION
   CAPTURED
   FAILED
   REFUNDED
@@ -245,7 +246,7 @@ model Hotel {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   deletedAt     DateTime?
-  razorpayAccountId String?
+  upiId         String?
 
   owner        HotelOwner      @relation("OwnerHotels", fields: [ownerId], references: [id])
   images       HotelImage[]
@@ -422,6 +423,8 @@ model Payment {
   amountPaise   Int
   currency      String          @default("INR")
   method        String?         // upi | card | netbanking | wallet
+  utr           String?
+  upiId         String?         // The upi id the money was sent to
   failureReason String?
   refundId      String?
   refundAmountPaise Int         @default(0)
@@ -567,7 +570,7 @@ model Guide {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   deletedAt       DateTime?
-  razorpayAccountId String?
+  upiId           String?
 
   user            User           @relation(fields: [userId], references: [id])
   bookings        GuideBooking[]

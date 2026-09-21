@@ -8,7 +8,8 @@ type AdminBooking = {
   id: string; bookingCode: string; status: string; hotelName: string;
   customerName: string; customerPhone: string | null; roomName: string;
   checkIn: string; checkOut: string; guests: number; roomsCount: number;
-  totalPaise: number; commissionPaise: number; paymentStatus: string; createdAt: string;
+  totalPaise: number; commissionPaise: number; paymentStatus: string; 
+  paymentId?: string; utr?: string; createdAt: string;
 };
 
 export default function AdminBookingsPage() {
@@ -33,6 +34,16 @@ export default function AdminBookingsPage() {
     if (!confirm('Cancel this booking on behalf of the platform?')) return;
     await api.post(`/api/bookings/${id}/transition`, { action: 'CANCEL', reason: 'Cancelled by platform admin' }, true);
     load();
+  }
+
+  async function verifyPayment(paymentId: string, action: 'APPROVE' | 'REJECT') {
+    if (!confirm(`Are you sure you want to ${action.toLowerCase()} this payment UTR?`)) return;
+    try {
+      await api.post(`/api/payments/verify`, { paymentId, action }, true);
+      load();
+    } catch (e: any) {
+      alert(e.message || 'Error verifying payment');
+    }
   }
 
   return (
@@ -85,9 +96,18 @@ export default function AdminBookingsPage() {
                   </td>
                   <td className="p-3 font-semibold">{formatINR(b.totalPaise)}</td>
                   <td className="p-3 text-kerala-600">{formatINR(b.commissionPaise)}</td>
-                  <td className="p-3"><span className="badge bg-temple-50 text-temple-600">{b.paymentStatus}</span></td>
-                  <td className="p-3"><span className={`badge ${statusTone(b.status)}`}>{b.status}</span></td>
                   <td className="p-3">
+                    <span className="badge bg-temple-50 text-temple-600">{b.paymentStatus}</span>
+                    {b.utr && <div className="mt-1 text-[10px] text-temple-500 font-mono">UTR: {b.utr}</div>}
+                  </td>
+                  <td className="p-3"><span className={`badge ${statusTone(b.status)}`}>{b.status}</span></td>
+                  <td className="p-3 flex gap-2">
+                    {b.paymentStatus === 'PENDING_VERIFICATION' && b.paymentId && (
+                      <>
+                        <button onClick={() => verifyPayment(b.paymentId!, 'APPROVE')} className="btn bg-kerala-50 px-2 py-1 text-xs text-kerala-700">Approve</button>
+                        <button onClick={() => verifyPayment(b.paymentId!, 'REJECT')} className="btn bg-red-50 px-2 py-1 text-xs text-red-600">Reject</button>
+                      </>
+                    )}
                     {['PENDING', 'CONFIRMED'].includes(b.status) && (
                       <button onClick={() => cancelBooking(b.id)} className="btn bg-red-50 px-3 py-1 text-xs text-red-600">Cancel</button>
                     )}

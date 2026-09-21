@@ -25,14 +25,14 @@ ridesRouter.post('/register', requireAuth, asyncH(async (req, res) => {
   });
   const data = schema.parse(req.body);
 
-  if (req.user!.role === 'CUSTOMER') {
-    await prisma.user.update({ where: { id: req.user!.id }, data: { role: 'DRIVER' } });
+  if (req.auth!.role === 'CUSTOMER') {
+    await prisma.user.update({ where: { id: req.auth!.id }, data: { role: 'DRIVER' } });
   }
 
   const driver = await prisma.driver.create({
     data: {
-      userId: req.user!.id,
-      name: req.user!.name,
+      userId: req.auth!.id,
+      name: req.auth!.name,
       phone: data.phone,
       licenseNumber: data.licenseNumber,
       status: 'PENDING',
@@ -63,15 +63,15 @@ ridesRouter.post('/request', requireAuth, asyncH(async (req, res) => {
 
   const ride = await prisma.ride.create({
     data: {
-      customerId: req.user!.id,
+      customerId: req.auth!.id,
       ...data,
       date: new Date(data.date),
       status: 'REQUESTED'
     }
   });
 
-  const trip = await prisma.trip.findFirst({ where: { customerId: req.user!.id } })
-    || await prisma.trip.create({ data: { customerId: req.user!.id, name: "My Guruvayoor Trip" } });
+  const trip = await prisma.trip.findFirst({ where: { customerId: req.auth!.id } })
+    || await prisma.trip.create({ data: { customerId: req.auth!.id, name: "My Guruvayoor Trip" } });
 
   await prisma.tripItem.create({
     data: {
@@ -92,8 +92,8 @@ ridesRouter.patch('/:id/status', requireAuth, asyncH(async (req, res) => {
   const { status } = req.body;
   
   // Basic validation that user is a driver (in real app we'd verify ownership of ride)
-  const driver = await prisma.driver.findUnique({ where: { userId: req.user!.id } });
-  if (!driver) throw new ApiError('Not a driver', 403);
+  const driver = await prisma.driver.findUnique({ where: { userId: req.auth!.id } });
+  if (!driver) throw ApiError.forbidden('Not a driver');
 
   const ride = await prisma.ride.update({
     where: { id: req.params.id },
@@ -105,10 +105,10 @@ ridesRouter.patch('/:id/status', requireAuth, asyncH(async (req, res) => {
 // GET /api/rides/dashboard - Driver dashboard
 ridesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
   const driver = await prisma.driver.findUnique({
-    where: { userId: req.user!.id },
+    where: { userId: req.auth!.id },
     include: { vehicle: true }
   });
-  if (!driver) throw new ApiError('Not registered as driver', 403);
+  if (!driver) throw ApiError.forbidden('Not registered as driver');
 
   const rides = await prisma.ride.findMany({
     where: { driverId: driver.id },
@@ -140,7 +140,7 @@ ridesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
 ridesRouter.patch('/online', requireAuth, asyncH(async (req, res) => {
   const { isOnline } = z.object({ isOnline: z.boolean() }).parse(req.body);
   const driver = await prisma.driver.update({
-    where: { userId: req.user!.id },
+    where: { userId: req.auth!.id },
     data: { isOnline }
   });
   res.json({ isOnline: driver.isOnline });
