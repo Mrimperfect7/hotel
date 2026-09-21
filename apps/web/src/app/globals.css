@@ -43,3 +43,27 @@ body {
 .badge {
   @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
 }
+
+@keyframes floatSlow {
+  0% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+  100% {
+    transform: translateY(6px) rotate(-1deg);
+  }
+}
+
+@keyframes pulseGold {
+  0%, 100% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 12px rgba(223, 169, 44, 0.4));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 24px rgba(242, 216, 138, 0.8));
+  }
+}
+

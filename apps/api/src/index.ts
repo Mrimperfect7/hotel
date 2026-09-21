@@ -11,6 +11,10 @@ import { paymentsRouter } from './routes/payments.js';
 import { ownerRouter } from './routes/owner.js';
 import { adminRouter } from './routes/admin.js';
 import { reviewsRouter, miscRouter } from './routes/reviews.js';
+import { guidesRouter } from './routes/guides.js';
+import { ridesRouter } from './routes/rides.js';
+import { foodRouter } from './routes/food.js';
+import { tripsRouter } from './routes/trips.js';
 
 const app = buildApp();
 
@@ -33,6 +37,11 @@ app.use('/api/reviews', reviewsRouter);
 app.use('/api/me', miscRouter);
 app.use('/api/owner', ownerRouter);
 app.use('/api/admin', adminRouter);
+
+app.use('/api/guides', guidesRouter);
+app.use('/api/rides', ridesRouter);
+app.use('/api/food', foodRouter);
+app.use('/api/trips', tripsRouter);
 
 // Uploaded images (dev local storage; prod uses Cloudinary CDN).
 app.use('/uploads', express.static(path.resolve('uploads'), { fallthrough: true, maxAge: '7d' }));

@@ -26,6 +26,9 @@ datasource db {
 enum Role {
   CUSTOMER
   HOTEL_OWNER
+  GUIDE
+  DRIVER
+  RESTAURANT_OWNER
   ADMIN
   SUPER_ADMIN
 }
@@ -133,6 +136,13 @@ model User {
   auditLogs         AuditLog[]
   deviceTokens      DeviceToken[]
   bookingsAsCustomer Booking[]     @relation("CustomerBookings")
+  guideProfile      Guide?
+  driverProfile     Driver?
+  restaurantProfile Restaurant?
+  guideBookings     GuideBooking[]
+  rides             Ride[]
+  foodOrders        FoodOrder[]
+  trips             Trip[]
 
   @@index([role])
   @@index([isBlocked])
@@ -400,7 +410,10 @@ model BookingRoom {
 
 model Payment {
   id            String          @id @default(uuid())
-  bookingId     String
+  bookingId     String?
+  guideBookingId String?
+  rideId        String?
+  foodOrderId   String?
   provider      PaymentProvider @default(MOCK)
   providerOrderId   String?
   providerPaymentId String?
@@ -415,7 +428,10 @@ model Payment {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  guideBooking GuideBooking? @relation(fields: [guideBookingId], references: [id], onDelete: Cascade)
+  ride Ride? @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  foodOrder FoodOrder? @relation(fields: [foodOrderId], references: [id], onDelete: Cascade)
 
   @@index([bookingId])
   @@index([providerOrderId])
@@ -516,4 +532,274 @@ model PlatformSetting {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+// ── NEW SERVICES (GUIDE, RIDE, FOOD, TRIP) ────────────────────────────────────
+
+enum ProviderStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+// GUIDE models
+model Guide {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  name            String
+  phone           String
+  photoUrl        String?
+  languages       String[]
+  experienceYears Int            @default(0)
+  specialization  String?
+  description     String?        @db.Text
+  serviceArea     String?
+  hourlyPricePaise   Int         @default(0)
+  halfDayPricePaise  Int         @default(0)
+  fullDayPricePaise  Int         @default(0)
+  status          ProviderStatus @default(PENDING)
+  rejectionReason String?        @db.Text
+  ratingAvg       Float          @default(0)
+  reviewCount     Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  deletedAt       DateTime?
+
+  user            User           @relation(fields: [userId], references: [id])
+  bookings        GuideBooking[]
+  availabilities  GuideAvailability[]
+}
+
+model GuideAvailability {
+  id        String   @id @default(uuid())
+  guideId   String
+  date      DateTime @db.Date
+  isAvailable Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guide     Guide    @relation(fields: [guideId], references: [id])
+  
+  @@unique([guideId, date])
+}
+
+enum GuideBookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+model GuideBooking {
+  id              String             @id @default(uuid())
+  guideId         String
+  customerId      String
+  date            DateTime           @db.Date
+  startTime       String?
+  durationHours   Int?
+  totalPaise      Int
+  status          GuideBookingStatus @default(PENDING)
+  specialRequests String?            @db.Text
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  guide           Guide              @relation(fields: [guideId], references: [id])
+  customer        User               @relation(fields: [customerId], references: [id])
+  payments        Payment[]
+}
+
+// RIDE models
+model Driver {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  name            String
+  phone           String
+  photoUrl        String?
+  licenseNumber   String
+  serviceArea     String?
+  isOnline        Boolean        @default(false)
+  status          ProviderStatus @default(PENDING)
+  ratingAvg       Float          @default(0)
+  reviewCount     Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id])
+  vehicle         Vehicle?
+  rides           Ride[]
+}
+
+model Vehicle {
+  id              String   @id @default(uuid())
+  driverId        String   @unique
+  type            String   
+  number          String   @unique
+  model           String?
+  insuranceDocs   String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  driver          Driver   @relation(fields: [driverId], references: [id])
+}
+
+enum RideStatus {
+  REQUESTED
+  SEARCHING
+  DRIVER_ASSIGNED
+  DRIVER_ARRIVING
+  RIDE_STARTED
+  RIDE_COMPLETED
+  CANCELLED
+}
+
+model Ride {
+  id              String     @id @default(uuid())
+  customerId      String
+  driverId        String?
+  pickupLocation  String
+  destination     String
+  pickupLat       Float?
+  pickupLng       Float?
+  destLat         Float?
+  destLng         Float?
+  date            DateTime   @db.Date
+  time            String
+  vehicleType     String
+  passengers      Int        @default(1)
+  distanceMeters  Int?
+  estimatedPaise  Int?
+  finalPaise      Int?
+  status          RideStatus @default(REQUESTED)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  customer        User       @relation(fields: [customerId], references: [id])
+  driver          Driver?    @relation(fields: [driverId], references: [id])
+  payments        Payment[]
+}
+
+// FOOD models
+model Restaurant {
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  name            String
+  slug            String         @unique
+  phone           String
+  address         String
+  lat             Float?
+  lng             Float?
+  photos          String[]
+  cuisine         String[]
+  openingHours    String?
+  deliveryAvailable Boolean      @default(true)
+  status          ProviderStatus @default(PENDING)
+  ratingAvg       Float          @default(0)
+  reviewCount     Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id])
+  menuCategories  MenuCategory[]
+  orders          FoodOrder[]
+}
+
+model MenuCategory {
+  id           String     @id @default(uuid())
+  restaurantId String
+  name         String
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  items        MenuItem[]
+}
+
+model MenuItem {
+  id             String       @id @default(uuid())
+  categoryId     String
+  name           String
+  description    String?      @db.Text
+  pricePaise     Int
+  isVeg          Boolean      @default(true)
+  isAvailable    Boolean      @default(true)
+  photoUrl       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  category       MenuCategory @relation(fields: [categoryId], references: [id])
+  orderItems     FoodOrderItem[]
+}
+
+enum FoodOrderStatus {
+  PLACED
+  ACCEPTED
+  PREPARING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model FoodOrder {
+  id           String          @id @default(uuid())
+  customerId   String
+  restaurantId String
+  totalPaise   Int
+  status       FoodOrderStatus @default(PLACED)
+  deliveryAddress String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  customer     User            @relation(fields: [customerId], references: [id])
+  restaurant   Restaurant      @relation(fields: [restaurantId], references: [id])
+  items        FoodOrderItem[]
+  payments     Payment[]
+}
+
+model FoodOrderItem {
+  id          String    @id @default(uuid())
+  orderId     String
+  menuItemId  String
+  quantity    Int
+  pricePaise  Int       
+
+  order       FoodOrder @relation(fields: [orderId], references: [id])
+  menuItem    MenuItem  @relation(fields: [menuItemId], references: [id])
+}
+
+// TRIP models
+enum TripItemType {
+  HOTEL
+  GUIDE
+  RIDE
+  FOOD
+}
+
+model Trip {
+  id         String     @id @default(uuid())
+  customerId String
+  name       String     @default("My Guruvayoor Trip")
+  startDate  DateTime?  @db.Date
+  endDate    DateTime?  @db.Date
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  customer   User       @relation(fields: [customerId], references: [id])
+  items      TripItem[]
+}
+
+model TripItem {
+  id         String       @id @default(uuid())
+  tripId     String
+  type       TripItemType
+  entityId   String       
+  dateTime   DateTime
+  title      String
+  subtitle   String?
+  createdAt  DateTime     @default(now())
+
+  trip       Trip         @relation(fields: [tripId], references: [id])
 }

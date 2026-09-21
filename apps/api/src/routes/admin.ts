@@ -431,3 +431,29 @@ adminRouter.get(
     res.json({ logs });
   })
 );
+
+// --- NEW SERVICE APPROVALS ---
+
+adminRouter.patch('/guides/:id/approve', asyncH(async (req, res) => {
+  const guide = await prisma.guide.update({
+    where: { id: req.params.id },
+    data: { status: 'APPROVED' }
+  });
+  res.json({ guide });
+}));
+
+adminRouter.patch('/drivers/:id/approve', asyncH(async (req, res) => {
+  const driver = await prisma.driver.update({
+    where: { id: req.params.id },
+    data: { status: 'APPROVED' }
+  });
+  res.json({ driver });
+}));
+
+adminRouter.patch('/restaurants/:id/approve', asyncH(async (req, res) => {
+  const restaurant = await prisma.restaurant.update({
+    where: { id: req.params.id },
+    data: { status: 'APPROVED' }
+  });
+  res.json({ restaurant });
+}));
