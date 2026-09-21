@@ -65,10 +65,10 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Main 2-Column Hero Grid: Left Text + Search, Right 3D Interactive Card */}
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
+        {/* Main 1-Column Hero Grid */}
+        <div className="flex flex-col items-start gap-12 lg:gap-8">
           {/* Left Column: Heading, Value Prop, Search, Filters */}
-          <div className="lg:col-span-7">
+          <div className="max-w-3xl">
             {/* Sacred Location Badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-gold-400/30 bg-gold-500/15 px-3.5 py-1 text-xs font-semibold text-gold-300 backdrop-blur-md">
               <span>🛕</span>
@@ -138,34 +138,7 @@ export function HeroSection() {
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Right Column: 3D Interactive Floating Hotel Card Showcase */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center">
-            <div className="w-full max-w-md">
-
-              {/* Static Card Image */}
-              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl shadow-2xl border border-gold-400/20">
-                <img src="/hero-temple.jpg" alt="Featured Temple Stay" className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-temple-900 via-temple-900/40 to-transparent"></div>
-                <div className="absolute bottom-0 p-6">
-                  <h3 className="text-2xl font-bold text-white">Welcome to Guruvayoor</h3>
-                  <p className="mt-2 text-sm text-temple-200">Find peace and divinity near the temple.</p>
-                </div>
-              </div>
-
-              {/* Quick Darshan Guidance Note */}
-              <div className="mt-3 rounded-2xl border border-gold-400/20 bg-temple-900/60 p-3.5 text-center text-xs text-temple-200 backdrop-blur-md shadow-md">
-                <p className="flex items-center justify-center gap-1.5 font-medium text-gold-200">
-                  <span>🔔</span>
-                  <span>Early Morning Nirmalyam Darshan Tip:</span>
-                </p>
-                <p className="mt-1 text-[11px] text-temple-300">
-                  Stay within 300 meters of East Nada to arrive before the 03:00 AM queue opens without needing vehicles.
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
