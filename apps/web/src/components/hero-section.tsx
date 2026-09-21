@@ -1,24 +1,8 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { SearchBar } from '@/components/search-bar';
-import { Hero3DCard } from '@/components/hero-3d-card';
 import { TEMPLE_DISTANCE_BANDS } from '@gsv/types';
-
-// Dynamically import Three.js 3D canvas with SSR disabled
-const Hero3DScene = dynamic(() => import('@/components/hero-3d-scene'), {
-  ssr: false,
-  loading: () => (
-    <div
-      className="absolute inset-0 opacity-25"
-      style={{
-        backgroundImage:
-          'radial-gradient(circle at 75% 25%, #dfa92c 0, transparent 50%), radial-gradient(circle at 20% 80%, #3f9d63 0, transparent 45%)',
-      }}
-    />
-  ),
-});
 
 const NADA_GATES = [
   { name: 'Kizhakke Nada (East)', query: 'East Nada', desc: 'Main Temple Entrance' },
@@ -37,8 +21,8 @@ const STATS = [
 export function HeroSection() {
   return (
     <section className="relative min-h-[680px] overflow-hidden bg-gradient-to-b from-temple-900 via-temple-950 to-temple-900 text-white">
-      {/* 3D Three.js Interactive WebGL Background */}
-      <Hero3DScene />
+      {/* Static Background Image */}
+      <img src="/hero-temple.jpg" alt="Guruvayoor Temple" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" />
 
       {/* Atmospheric Lighting Gradients */}
       <div
@@ -163,13 +147,20 @@ export function HeroSection() {
               <div className="mb-2 flex items-center justify-between px-2 text-xs">
                 <span className="flex items-center gap-1.5 font-semibold text-gold-300">
                   <span className="inline-block h-2 w-2 rounded-full bg-gold-400 animate-pulse" />
-                  Live Stays Preview (Interactive 3D)
+                  Live Stays Preview
                 </span>
-                <span className="text-temple-300">Hover to rotate</span>
+                <span className="text-temple-300">Guruvayoor</span>
               </div>
 
-              {/* 3D Tilt Card Component */}
-              <Hero3DCard />
+              {/* Static Card Image */}
+              <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl shadow-2xl border border-gold-400/20">
+                <img src="/hero-temple.jpg" alt="Featured Temple Stay" className="h-full w-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-temple-900 via-temple-900/40 to-transparent"></div>
+                <div className="absolute bottom-0 p-6">
+                  <h3 className="text-2xl font-bold text-white">Welcome to Guruvayoor</h3>
+                  <p className="mt-2 text-sm text-temple-200">Find peace and divinity near the temple.</p>
+                </div>
+              </div>
 
               {/* Quick Darshan Guidance Note */}
               <div className="mt-3 rounded-2xl border border-gold-400/20 bg-temple-900/60 p-3.5 text-center text-xs text-temple-200 backdrop-blur-md shadow-md">

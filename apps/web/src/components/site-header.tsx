@@ -24,7 +24,7 @@ export function SiteHeader() {
         <Link href="/" className="flex items-center gap-2.5">
           <img src="/logo.png" alt="Namma Guruvayoor" className="h-11 w-11 rounded-lg object-contain" />
           <span className="font-display text-lg font-bold leading-tight text-temple-700">
-            Guruvayoor <span className="text-gold-600">Go</span>
+            Namma<span className="text-gold-600">Guruvayoor</span>
           </span>
         </Link>
 
