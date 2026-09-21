@@ -434,26 +434,103 @@ adminRouter.get(
 
 // --- NEW SERVICE APPROVALS ---
 
-adminRouter.patch('/guides/:id/approve', asyncH(async (req, res) => {
+const providerReviewSchema = z.object({
+  action: z.enum(['APPROVE', 'REJECT', 'SUSPEND', 'REACTIVATE', 'UNDER_REVIEW']),
+  reason: z.string().max(1000).optional(),
+});
+
+function getProviderStatus(action: string) {
+  const map: Record<string, 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'SUSPENDED'> = {
+    UNDER_REVIEW: 'UNDER_REVIEW',
+    APPROVE: 'APPROVED',
+    REJECT: 'REJECTED',
+    SUSPEND: 'SUSPENDED',
+    REACTIVATE: 'APPROVED',
+  };
+  return map[action];
+}
+
+adminRouter.get('/guides', asyncH(async (req, res) => {
+  const status = req.query.status as string | undefined;
+  const guides = await prisma.guide.findMany({
+    where: {
+      deletedAt: null,
+      ...(status && status !== 'ALL' ? { status: status as never } : {})
+    },
+    include: { user: { select: { email: true, name: true, phone: true } } },
+    orderBy: { createdAt: 'desc' }
+  });
+  res.json({ guides });
+}));
+
+adminRouter.patch('/guides/:id', asyncH(async (req, res) => {
+  const { action, reason } = providerReviewSchema.parse(req.body);
+  const toStatus = getProviderStatus(action);
+  if (!toStatus) throw ApiError.badRequest('Unknown action');
+  
   const guide = await prisma.guide.update({
     where: { id: req.params.id },
-    data: { status: 'APPROVED' }
+    data: { 
+      status: toStatus,
+      ...(action === 'REJECT' ? { rejectionReason: reason } : {})
+    },
+    include: { user: { select: { email: true } } }
   });
+  await audit(req, `GUIDE_${action}`, 'Guide', guide.id, { to: toStatus, reason });
   res.json({ guide });
 }));
 
-adminRouter.patch('/drivers/:id/approve', asyncH(async (req, res) => {
+adminRouter.get('/drivers', asyncH(async (req, res) => {
+  const status = req.query.status as string | undefined;
+  const drivers = await prisma.driver.findMany({
+    where: {
+      ...(status && status !== 'ALL' ? { status: status as never } : {})
+    },
+    include: { 
+      user: { select: { email: true, name: true, phone: true } },
+      vehicle: true
+    },
+    orderBy: { createdAt: 'desc' }
+  });
+  res.json({ drivers });
+}));
+
+adminRouter.patch('/drivers/:id', asyncH(async (req, res) => {
+  const { action, reason } = providerReviewSchema.parse(req.body);
+  const toStatus = getProviderStatus(action);
+  if (!toStatus) throw ApiError.badRequest('Unknown action');
+  
   const driver = await prisma.driver.update({
     where: { id: req.params.id },
-    data: { status: 'APPROVED' }
+    data: { status: toStatus },
+    include: { user: { select: { email: true } } }
   });
+  await audit(req, `DRIVER_${action}`, 'Driver', driver.id, { to: toStatus, reason });
   res.json({ driver });
 }));
 
-adminRouter.patch('/restaurants/:id/approve', asyncH(async (req, res) => {
+adminRouter.get('/restaurants', asyncH(async (req, res) => {
+  const status = req.query.status as string | undefined;
+  const restaurants = await prisma.restaurant.findMany({
+    where: {
+      ...(status && status !== 'ALL' ? { status: status as never } : {})
+    },
+    include: { user: { select: { email: true, name: true, phone: true } } },
+    orderBy: { createdAt: 'desc' }
+  });
+  res.json({ restaurants });
+}));
+
+adminRouter.patch('/restaurants/:id', asyncH(async (req, res) => {
+  const { action, reason } = providerReviewSchema.parse(req.body);
+  const toStatus = getProviderStatus(action);
+  if (!toStatus) throw ApiError.badRequest('Unknown action');
+  
   const restaurant = await prisma.restaurant.update({
     where: { id: req.params.id },
-    data: { status: 'APPROVED' }
+    data: { status: toStatus },
+    include: { user: { select: { email: true } } }
   });
+  await audit(req, `RESTAURANT_${action}`, 'Restaurant', restaurant.id, { to: toStatus, reason });
   res.json({ restaurant });
 }));
