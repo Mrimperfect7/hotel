@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { SearchBar } from '@/components/search-bar';
 import { TEMPLE_DISTANCE_BANDS } from '@gsv/types';
+import { MapPin, Footprints, Zap, Star, Castle, Bell } from 'lucide-react';
 
 const NADA_GATES = [
   { name: 'Kizhakke Nada (East)', query: 'East Nada', desc: 'Main Temple Entrance' },
@@ -12,10 +13,10 @@ const NADA_GATES = [
 ];
 
 const STATS = [
-  { value: '40+', label: 'Verified Stays', icon: '🛕' },
-  { value: '150m', label: 'Avg Nada Walk', icon: '🚶' },
-  { value: '0%', label: 'Extra Platform Fee', icon: '⚡' },
-  { value: '4.9★', label: 'Devotee Rating', icon: '⭐' },
+  { value: '40+', label: 'Verified Stays', icon: <Castle className="h-5 w-5 text-gold-400" /> },
+  { value: '150m', label: 'Avg Nada Walk', icon: <Footprints className="h-5 w-5 text-gold-400" /> },
+  { value: '0%', label: 'Extra Platform Fee', icon: <Zap className="h-5 w-5 text-gold-400" /> },
+  { value: '4.9★', label: 'Devotee Rating', icon: <Star className="h-5 w-5 text-gold-400" /> },
 ];
 
 export function HeroSection() {
@@ -71,7 +72,7 @@ export function HeroSection() {
           <div className="max-w-3xl">
             {/* Sacred Location Badge */}
             <div className="inline-flex items-center gap-2 rounded-full border border-gold-400/30 bg-gold-500/15 px-3.5 py-1 text-xs font-semibold text-gold-300 backdrop-blur-md">
-              <span>🛕</span>
+              <Castle className="h-4 w-4" />
               <span>Namma Guruvayoor</span>
               <span className="text-gold-500">•</span>
               <span className="text-temple-100">Thrissur, Kerala</span>
@@ -108,7 +109,7 @@ export function HeroSection() {
                     href={`/hotels?q=${encodeURIComponent(gate.query)}`}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-temple-100 backdrop-blur-sm transition-all hover:border-gold-400/50 hover:bg-gold-400/10 hover:text-white"
                   >
-                    <span className="text-gold-400">📍</span>
+                    <MapPin className="h-3.5 w-3.5 text-gold-400" />
                     <span>{gate.name}</span>
                   </Link>
                 ))}
@@ -119,7 +120,7 @@ export function HeroSection() {
                     href={`/hotels?band=${b.key}`}
                     className="inline-flex items-center gap-1 rounded-xl border border-gold-400/25 bg-gold-400/10 px-3 py-1.5 text-xs font-medium text-gold-200 backdrop-blur-sm transition-all hover:bg-gold-400/20"
                   >
-                    <span>🚶</span>
+                    <Footprints className="h-3.5 w-3.5 text-gold-400" />
                     <span>{b.label}</span>
                   </Link>
                 ))}
