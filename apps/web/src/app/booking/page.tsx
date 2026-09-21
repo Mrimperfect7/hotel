@@ -176,7 +176,6 @@ function Checkout() {
         <dl className="mt-3 space-y-2 text-sm">
           <div className="flex justify-between"><dt className="text-temple-500">₹{estimate.subtotalPaise / 100 / nights / rooms || 0} × {nights} night{nights>1?'s':''} × {rooms} room{rooms>1?'s':''}</dt><dd /></div>
           <div className="flex justify-between"><dt className="text-temple-500">Subtotal</dt><dd className="font-semibold">{formatINR(estimate.subtotalPaise)}</dd></div>
-          <div className="flex justify-between"><dt className="text-temple-500">GST (12%)</dt><dd className="font-semibold">{formatINR(estimate.taxPaise)}</dd></div>
           <div className="flex justify-between border-t border-temple-100 pt-2 text-base">
             <dt className="font-bold text-temple-700">Total payable</dt>
             <dd className="font-bold text-gold-700">{formatINR(estimate.totalPaise)}</dd>

@@ -245,6 +245,7 @@ model Hotel {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   deletedAt     DateTime?
+  razorpayAccountId String?
 
   owner        HotelOwner      @relation("OwnerHotels", fields: [ownerId], references: [id])
   images       HotelImage[]
@@ -566,6 +567,7 @@ model Guide {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   deletedAt       DateTime?
+  razorpayAccountId String?
 
   user            User           @relation(fields: [userId], references: [id])
   bookings        GuideBooking[]
@@ -626,6 +628,7 @@ model Driver {
   reviewCount     Int            @default(0)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  razorpayAccountId String?
 
   user            User           @relation(fields: [userId], references: [id])
   vehicle         Vehicle?
@@ -700,6 +703,7 @@ model Restaurant {
   reviewCount     Int            @default(0)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
+  razorpayAccountId String?
 
   user            User           @relation(fields: [userId], references: [id])
   menuCategories  MenuCategory[]

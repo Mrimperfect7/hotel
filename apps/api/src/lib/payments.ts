@@ -13,6 +13,11 @@ export type CreateOrderInput = {
   amountPaise: number;
   receipt: string; // booking code
   notes?: Record<string, string>;
+  transfers?: Array<{
+    account: string;
+    amount: number;
+    currency: 'INR';
+  }>;
 };
 
 export type GatewayOrder = {
@@ -51,12 +56,16 @@ export async function createOrder(input: CreateOrderInput): Promise<GatewayOrder
     };
   }
   const rzp = await getRazorpay();
-  const order = await rzp.orders.create({
+  const orderPayload: any = {
     amount: input.amountPaise,
     currency: 'INR',
     receipt: input.receipt,
     notes: input.notes ?? {},
-  });
+  };
+  if (input.transfers && input.transfers.length > 0) {
+    orderPayload.transfers = input.transfers;
+  }
+  const order = await rzp.orders.create(orderPayload);
   return {
     provider: 'RAZORPAY',
     orderId: order.id,

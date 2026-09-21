@@ -77,7 +77,7 @@ export default function Checkout() {
       <View style={styles.card}>
         <Text style={styles.label}>PRICE ESTIMATE (server confirms final)</Text>
         <Row label={`${inr(price)} × ${nights} night${nights > 1 ? 's' : ''} × ${rooms}`} value={inr(subtotal)} />
-        <Row label="GST (12%)" value={inr(tax)} />
+
         <Row label="Total" value={inr(total)} bold />
       </View>
 

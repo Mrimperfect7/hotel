@@ -35,10 +35,20 @@ paymentsRouter.post(
       throw ApiError.conflict(`Cannot pay for a ${booking.status.toLowerCase()} booking`, 'BOOKING_NOT_PAYABLE');
     }
 
+    const transfers: Array<{ account: string; amount: number; currency: 'INR' }> = [];
+    if (booking.hotel.razorpayAccountId && booking.ownerPayoutPaise > 0) {
+      transfers.push({
+        account: booking.hotel.razorpayAccountId,
+        amount: booking.ownerPayoutPaise,
+        currency: 'INR',
+      });
+    }
+
     const order = await createOrder({
       amountPaise: booking.totalPaise,
       receipt: booking.bookingCode,
       notes: { bookingCode: booking.bookingCode, hotel: booking.hotel.name },
+      transfers,
     });
 
     const payment = await prisma.payment.create({

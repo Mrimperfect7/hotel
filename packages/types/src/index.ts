@@ -87,18 +87,16 @@ export function formatINR(paise: number): string {
 
 /**
  * Server-side price calculation. Client-supplied prices are NEVER trusted.
- * GST for hotel rooms ≤ ₹7,500/night is 12%; above that 18% (Indian tax rule).
+ * GST is no longer applied (removed per platform requirements).
  */
 export function calculatePrice(opts: {
   pricePerNightPaise: number;
   nights: number;
   rooms: number;
-  taxBps?: number; // basis points, default derived from slab
 }): { subtotalPaise: number; taxPaise: number; totalPaise: number } {
   const { pricePerNightPaise, nights, rooms } = opts;
-  const taxBps = opts.taxBps ?? (pricePerNightPaise > 750000 ? 1800 : 1200);
   const subtotalPaise = pricePerNightPaise * nights * rooms;
-  const taxPaise = Math.round((subtotalPaise * taxBps) / 10000);
+  const taxPaise = 0;
   return { subtotalPaise, taxPaise, totalPaise: subtotalPaise + taxPaise };
 }
 
