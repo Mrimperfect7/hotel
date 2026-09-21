@@ -143,14 +143,6 @@ export function HeroSection() {
           {/* Right Column: 3D Interactive Floating Hotel Card Showcase */}
           <div className="lg:col-span-5 flex flex-col items-center justify-center">
             <div className="w-full max-w-md">
-              {/* Header Label over 3D Card */}
-              <div className="mb-2 flex items-center justify-between px-2 text-xs">
-                <span className="flex items-center gap-1.5 font-semibold text-gold-300">
-                  <span className="inline-block h-2 w-2 rounded-full bg-gold-400 animate-pulse" />
-                  Live Stays Preview
-                </span>
-                <span className="text-temple-300">Guruvayoor</span>
-              </div>
 
               {/* Static Card Image */}
               <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl shadow-2xl border border-gold-400/20">
