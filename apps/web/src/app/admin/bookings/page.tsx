@@ -6,9 +6,9 @@ import { fmtDate, formatINR, statusTone } from '@/lib/format';
 
 type AdminBooking = {
   id: string; bookingCode: string; status: string; hotelName: string;
-  customerName: string; customerPhone: string | null; roomName: string;
-  checkIn: string; checkOut: string; guests: number; roomsCount: number;
-  totalPaise: number; commissionPaise: number; paymentStatus: string; 
+  hotelUpiId: string | null; customerName: string; customerPhone: string | null; 
+  roomName: string; checkIn: string; checkOut: string; guests: number; roomsCount: number;
+  totalPaise: number; commissionPaise: number; payoutPaise: number; paymentStatus: string; 
   paymentId?: string; utr?: string; createdAt: string;
 };
 
@@ -76,7 +76,7 @@ export default function AdminBookingsPage() {
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
               <tr className="border-b border-temple-100 text-[11px] uppercase tracking-wide text-temple-400">
-                <th className="p-3">Booking</th><th className="p-3">Hotel</th><th className="p-3">Guest</th>
+                <th className="p-3">Booking</th><th className="p-3">Hotel (Payout)</th><th className="p-3">Guest</th>
                 <th className="p-3">Stay</th><th className="p-3">Total</th><th className="p-3">Commission</th>
                 <th className="p-3">Payment</th><th className="p-3">Status</th><th className="p-3"></th>
               </tr>
@@ -85,7 +85,15 @@ export default function AdminBookingsPage() {
               {rows.map((b) => (
                 <tr key={b.id} className="border-b border-temple-50">
                   <td className="p-3 font-mono text-xs text-gold-700">{b.bookingCode}</td>
-                  <td className="p-3">{b.hotelName}</td>
+                  <td className="p-3">
+                    <div className="font-semibold text-temple-700">{b.hotelName}</div>
+                    <div className="text-xs font-bold text-kerala-600 mt-1">Pay: {formatINR(b.payoutPaise)}</div>
+                    {b.hotelUpiId ? (
+                      <div className="text-[10px] text-temple-500 font-mono mt-0.5">UPI: {b.hotelUpiId}</div>
+                    ) : (
+                      <div className="text-[10px] text-red-500 mt-0.5">No UPI ID linked</div>
+                    )}
+                  </td>
                   <td className="p-3">
                     <div className="font-semibold text-temple-700">{b.customerName}</div>
                     <div className="text-xs text-temple-400">{b.customerPhone}</div>

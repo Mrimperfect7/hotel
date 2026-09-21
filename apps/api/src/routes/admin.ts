@@ -314,7 +314,7 @@ adminRouter.get(
       orderBy: { createdAt: 'desc' },
       take: 200,
       include: {
-        hotel: { select: { name: true, slug: true } },
+        hotel: { select: { name: true, slug: true, upiId: true } },
         rooms: { include: { roomType: { select: { name: true } } } },
         payments: { select: { id: true, status: true, utr: true } },
         customer: { select: { name: true, phone: true, email: true } },
@@ -325,12 +325,14 @@ adminRouter.get(
       bookings: bookings.map((b) => ({
         id: b.id, bookingCode: b.bookingCode, status: b.status,
         hotelName: b.hotel.name,
+        hotelUpiId: b.hotel.upiId,
         customerName: b.customer?.name ?? b.guestName,
         customerPhone: b.customer?.phone ?? b.guestPhone,
         roomName: b.rooms[0]?.roomType.name ?? '',
         checkIn: b.checkIn, checkOut: b.checkOut,
         guests: b.guests, roomsCount: b.roomsCount,
         totalPaise: b.totalPaise, commissionPaise: b.commissionPaise,
+        payoutPaise: b.totalPaise - b.commissionPaise,
         paymentStatus: b.payments[0]?.status ?? 'INITIATED',
         paymentId: b.payments[0]?.id,
         utr: b.payments[0]?.utr,
