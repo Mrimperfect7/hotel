@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 
+import { useRouter } from 'next/navigation';
+
 type TripItem = {
   id: string;
   type: string;
@@ -17,10 +19,17 @@ type TripData = {
 };
 
 export default function MyTripPage() {
+  const router = useRouter();
   const [trip, setTrip] = useState<TripData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const { getToken } = require('@/lib/api');
+    if (!getToken()) {
+      router.push('/login?next=/my-trip');
+      return;
+    }
+    
     api.get<{ data: TripData }>('/api/trips/me', true)
       .then(res => setTrip(res.data))
       .catch(() => {})
