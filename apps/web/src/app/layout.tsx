@@ -3,6 +3,8 @@ import './globals.css';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 
+import { Chatbot } from '@/components/chatbot';
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: {
@@ -27,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SiteHeader />
         <main className="min-h-[70vh]">{children}</main>
         <SiteFooter />
+        <Chatbot />
       </body>
     </html>
   );
