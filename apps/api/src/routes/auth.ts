@@ -44,6 +44,15 @@ authRouter.post(
         ownerProfile: body.role === 'HOTEL_OWNER'
           ? { create: { ownerName: body.name, phone: body.phone, email: body.email.toLowerCase() } }
           : undefined,
+        driverProfile: body.role === 'DRIVER' 
+          ? { create: { name: body.name, phone: body.phone, licenseNumber: 'PENDING' } } 
+          : undefined,
+        guideProfile: body.role === 'GUIDE' 
+          ? { create: { name: body.name, phone: body.phone } } 
+          : undefined,
+        restaurantProfile: body.role === 'RESTAURANT_OWNER' 
+          ? { create: { name: body.name, phone: body.phone, address: 'Pending', slug: `rest-${Date.now()}` } } 
+          : undefined,
       },
     });
 

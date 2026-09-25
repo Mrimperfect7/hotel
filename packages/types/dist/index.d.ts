@@ -93,19 +93,19 @@ export declare const registerSchema: z.ZodObject<{
     email: z.ZodString;
     phone: z.ZodString;
     password: z.ZodString;
-    role: z.ZodDefault<z.ZodEnum<["CUSTOMER", "HOTEL_OWNER"]>>;
+    role: z.ZodDefault<z.ZodEnum<["CUSTOMER", "HOTEL_OWNER", "DRIVER", "GUIDE", "RESTAURANT_OWNER"]>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
     email: string;
     phone: string;
     password: string;
-    role: "CUSTOMER" | "HOTEL_OWNER";
+    role: "CUSTOMER" | "HOTEL_OWNER" | "DRIVER" | "GUIDE" | "RESTAURANT_OWNER";
 }, {
     name: string;
     email: string;
     phone: string;
     password: string;
-    role?: "CUSTOMER" | "HOTEL_OWNER" | undefined;
+    role?: "CUSTOMER" | "HOTEL_OWNER" | "DRIVER" | "GUIDE" | "RESTAURANT_OWNER" | undefined;
 }>;
 export declare const loginSchema: z.ZodObject<{
     identifier: z.ZodString;

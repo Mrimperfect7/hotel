@@ -210,7 +210,7 @@ export const registerSchema = z.object({
     .min(8, 'Minimum 8 characters')
     .regex(/[A-Za-z]/, 'Needs a letter')
     .regex(/\d/, 'Needs a digit'),
-  role: z.enum(['CUSTOMER', 'HOTEL_OWNER']).default('CUSTOMER'),
+  role: z.enum(['CUSTOMER', 'HOTEL_OWNER', 'DRIVER', 'GUIDE', 'RESTAURANT_OWNER']).default('CUSTOMER'),
 });
 
 export const loginSchema = z.object({

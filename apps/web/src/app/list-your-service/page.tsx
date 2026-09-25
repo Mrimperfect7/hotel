@@ -24,21 +24,21 @@ export default function ListYourServicePage() {
               <Car className="w-12 h-12 text-gold-500 mb-4" />
               <h3 className="font-bold text-temple-700">Drive for Namma</h3>
               <p className="text-sm text-temple-500 mt-2 mb-4">Register as a verified taxi or auto driver.</p>
-              <Link href="/driver/register" className="btn-outline w-full mt-auto">Register as Driver</Link>
+              <Link href="/register?role=DRIVER" className="btn-outline w-full mt-auto">Register as Driver</Link>
             </div>
 
             <div className="card p-6 flex flex-col items-center text-center bg-white border border-temple-100 hover:border-gold-500 hover:shadow-lg transition">
               <Map className="w-12 h-12 text-gold-500 mb-4" />
               <h3 className="font-bold text-temple-700">Become a Guide</h3>
               <p className="text-sm text-temple-500 mt-2 mb-4">Share the history and culture of Guruvayoor.</p>
-              <Link href="/guide/register" className="btn-outline w-full mt-auto">Register as Guide</Link>
+              <Link href="/register?role=GUIDE" className="btn-outline w-full mt-auto">Register as Guide</Link>
             </div>
 
             <div className="card p-6 flex flex-col items-center text-center bg-white border border-temple-100 hover:border-gold-500 hover:shadow-lg transition">
               <Utensils className="w-12 h-12 text-gold-500 mb-4" />
               <h3 className="font-bold text-temple-700">Add Restaurant</h3>
               <p className="text-sm text-temple-500 mt-2 mb-4">Let visitors pre-order food or find your restaurant.</p>
-              <Link href="/restaurant/register" className="btn-outline w-full mt-auto">Register Restaurant</Link>
+              <Link href="/register?role=RESTAURANT_OWNER" className="btn-outline w-full mt-auto">Register Restaurant</Link>
             </div>
           </div>
         </div>

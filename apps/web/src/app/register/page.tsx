@@ -1,18 +1,37 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense, useEffect } from 'react';
 import { api, ApiError, setTokens } from '@/lib/api';
-import { Eye, EyeOff, UserPlus, Building2, Luggage } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, Building2, Luggage, Car, Map, Utensils } from 'lucide-react';
 
-export default function RegisterPage() {
+const ROLES = [
+  { id: 'CUSTOMER', label: 'I travel & book', icon: Luggage },
+  { id: 'HOTEL_OWNER', label: 'I own a hotel', icon: Building2 },
+  { id: 'DRIVER', label: 'I am a driver', icon: Car },
+  { id: 'GUIDE', label: 'I am a guide', icon: Map },
+  { id: 'RESTAURANT_OWNER', label: 'I own a restaurant', icon: Utensils },
+] as const;
+
+function RegisterForm() {
   const router = useRouter();
-  const [role, setRole] = useState<'CUSTOMER' | 'HOTEL_OWNER'>('CUSTOMER');
+  const searchParams = useSearchParams();
+  const defaultRole = (searchParams.get('role') as any) || 'CUSTOMER';
+  
+  const [role, setRole] = useState<typeof ROLES[number]['id']>(
+    ROLES.some(r => r.id === defaultRole) ? defaultRole : 'CUSTOMER'
+  );
+  
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    const r = searchParams.get('role');
+    if (r && ROLES.some(role => role.id === r)) setRole(r as any);
+  }, [searchParams]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,7 +42,14 @@ export default function RegisterPage() {
         '/api/auth/register', { ...form, role }
       );
       setTokens(res.accessToken, res.refreshToken);
-      router.push(role === 'HOTEL_OWNER' ? '/owner' : '/');
+      
+      let nextPath = '/';
+      if (role === 'HOTEL_OWNER') nextPath = '/owner';
+      if (role === 'DRIVER') nextPath = '/driver';
+      if (role === 'GUIDE') nextPath = '/guide';
+      if (role === 'RESTAURANT_OWNER') nextPath = '/restaurant';
+      
+      router.push(nextPath);
       router.refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Network error — please try again.');
@@ -33,7 +59,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-14">
+    <div className="mx-auto max-w-2xl px-4 py-14">
       <div className="card p-8 shadow-xl border border-temple-100 bg-white/90 backdrop-blur">
         <div className="flex items-center gap-3 mb-6">
           <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gold-500/10 text-gold-600">
@@ -45,18 +71,21 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {(['CUSTOMER', 'HOTEL_OWNER'] as const).map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRole(r)}
-              className={`rounded-xl border p-3 flex flex-col items-center justify-center gap-2 text-sm font-semibold transition-all ${role === r ? 'border-temple-600 bg-temple-50 text-temple-800 ring-1 ring-temple-600/20' : 'border-temple-200 text-temple-500 hover:border-temple-300 hover:bg-temple-50/50'}`}
-            >
-              {r === 'CUSTOMER' ? <Luggage className={`w-5 h-5 ${role === r ? 'text-temple-600' : 'text-temple-400'}`} /> : <Building2 className={`w-5 h-5 ${role === r ? 'text-temple-600' : 'text-temple-400'}`} />}
-              {r === 'CUSTOMER' ? 'I travel & book' : 'I own a service'}
-            </button>
-          ))}
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+          {ROLES.map((r) => {
+            const Icon = r.icon;
+            return (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setRole(r.id)}
+                className={`rounded-xl border p-3 flex flex-col items-center text-center justify-center gap-2 text-sm font-semibold transition-all ${role === r.id ? 'border-temple-600 bg-temple-50 text-temple-800 ring-1 ring-temple-600/20' : 'border-temple-200 text-temple-500 hover:border-temple-300 hover:bg-temple-50/50'}`}
+              >
+                <Icon className={`w-5 h-5 ${role === r.id ? 'text-temple-600' : 'text-temple-400'}`} />
+                {r.label}
+              </button>
+            );
+          })}
         </div>
 
         <form onSubmit={submit} className="mt-6 space-y-4">
@@ -107,5 +136,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-md px-4 py-14 text-center">Loading...</div>}>
+      <RegisterForm />
+    </Suspense>
   );
 }
