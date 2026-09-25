@@ -96,14 +96,38 @@ export default function Explore() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.ivory },
-  input: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: theme.text },
-  chip: { backgroundColor: '#fff', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7, marginRight: 8 },
-  chipOn: { backgroundColor: theme.temple },
-  card: { backgroundColor: '#fff', borderRadius: theme.radius, overflow: 'hidden' },
-  cover: { width: '100%', height: 150 },
-  name: { fontSize: 16, fontWeight: 'bold', color: theme.text },
-  sub: { fontSize: 12, color: theme.subtext, marginTop: 2 },
-  price: { color: theme.temple, fontWeight: 'bold', fontSize: 16, marginTop: 6 },
-  small: { fontSize: 11, color: theme.subtext, fontWeight: 'normal' },
+  screen: { flex: 1, backgroundColor: '#fcfaf6' },
+  input: { 
+    backgroundColor: '#fff', 
+    borderRadius: 16, 
+    paddingHorizontal: 16, 
+    paddingVertical: 14, 
+    color: theme.text,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    fontWeight: '500'
+  },
+  chip: { backgroundColor: '#fff', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 10, marginRight: 8, borderWidth: 1, borderColor: '#eaeaea' },
+  chipOn: { backgroundColor: theme.temple, borderColor: theme.temple },
+  card: { 
+    backgroundColor: '#fff', 
+    borderRadius: 20, 
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.02)',
+    marginBottom: 8
+  },
+  cover: { width: '100%', height: 180 },
+  name: { fontSize: 18, fontWeight: '900', color: theme.text, letterSpacing: -0.3 },
+  sub: { fontSize: 13, color: theme.subtext, marginTop: 4, fontWeight: '500' },
+  price: { color: theme.temple, fontWeight: '900', fontSize: 18, marginTop: 10 },
+  small: { fontSize: 13, color: theme.subtext, fontWeight: '500' },
 });
