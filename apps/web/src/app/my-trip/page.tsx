@@ -14,6 +14,7 @@ type TripItem = {
 
 type TripData = {
   name: string;
+  tripCode?: string;
   items: TripItem[];
 };
 
@@ -33,9 +34,16 @@ export default function MyTripPage() {
       <SiteHeader />
       <main className="flex-1 bg-temple-50/50 py-12">
         <div className="mx-auto max-w-3xl px-4">
-          <h1 className="font-display text-3xl font-bold text-temple-800 mb-8">
-            {trip?.name || 'My Guruvayoor Trip'}
-          </h1>
+          <div className="mb-8">
+            <h1 className="font-display text-3xl font-bold text-temple-800">
+              {trip?.name || 'My Guruvayoor Trip'}
+            </h1>
+            {trip?.tripCode && (
+              <div className="mt-2 inline-block rounded bg-gold-100 px-3 py-1 text-sm font-semibold text-gold-800 border border-gold-200">
+                Trip ID: {trip.tripCode}
+              </div>
+            )}
+          </div>
           
           {loading ? (
             <p className="text-center text-temple-500">Loading your trip...</p>

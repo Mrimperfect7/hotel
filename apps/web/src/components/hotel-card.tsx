@@ -14,6 +14,7 @@ export type HotelCardData = {
   roomTypes: Array<{ name: string; pricePaise: number; ac: boolean }>;
   amenities: string[];
   isFeatured: boolean;
+  isVerified: boolean;
 };
 
 export function HotelCard({ hotel }: { hotel: HotelCardData }) {
@@ -28,7 +29,10 @@ export function HotelCard({ hotel }: { hotel: HotelCardData }) {
             <div className="grid h-full place-items-center text-4xl">🛕</div>
           )}
           {hotel.isFeatured && (
-            <span className="badge absolute left-3 top-3 bg-gold-500 text-temple-900">★ Featured</span>
+            <span className="badge absolute left-3 top-3 bg-gold-500 text-temple-900 shadow-md">★ Featured</span>
+          )}
+          {hotel.isVerified && (
+            <span className="badge absolute left-3 top-10 bg-kerala-600 text-white shadow-md">✅ Namma Verified</span>
           )}
           {hotel.rating > 0 && (
             <span className="badge absolute right-3 top-3 bg-temple-600 text-white">

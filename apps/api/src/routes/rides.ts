@@ -61,12 +61,36 @@ ridesRouter.post('/request', requireAuth, asyncH(async (req, res) => {
   });
   const data = schema.parse(req.body);
 
+  // ELIGIBILITY ENGINE
+  // Find an eligible driver: online, verified, correct vehicle type, and all mandatory docs valid
+  const eligibleDriver = await prisma.driver.findFirst({
+    where: {
+      isOnline: true,
+      status: 'APPROVED',
+      isVerified: true,
+      vehicle: { type: data.vehicleType },
+      // Check that they don't have an active ride
+      rides: { none: { status: { in: ['DRIVER_ASSIGNED', 'DRIVER_ARRIVING', 'RIDE_STARTED'] } } },
+      // Check for valid documents (assuming DRIVING_LICENSE and VEHICLE_RC are mandatory)
+      documents: {
+        some: { docType: 'DRIVING_LICENSE', status: 'VERIFIED' }
+      },
+      AND: {
+        documents: {
+          some: { docType: 'VEHICLE_RC', status: 'VERIFIED' }
+        }
+      }
+    },
+    include: { vehicle: true }
+  });
+
   const ride = await prisma.ride.create({
     data: {
       customerId: req.auth!.id,
       ...data,
       date: new Date(data.date),
-      status: 'REQUESTED'
+      status: eligibleDriver ? 'DRIVER_ASSIGNED' : 'SEARCHING',
+      driverId: eligibleDriver ? eligibleDriver.id : null,
     }
   });
 

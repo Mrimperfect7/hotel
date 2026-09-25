@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { SearchBar } from '@/components/search-bar';
 import { TEMPLE_DISTANCE_BANDS } from '@gsv/types';
 import { MapPin, Footprints, Zap, Star, Castle, Bell } from 'lucide-react';
@@ -23,7 +24,14 @@ export function HeroSection() {
   return (
     <section className="relative min-h-[680px] overflow-hidden bg-gradient-to-b from-temple-900 via-temple-950 to-temple-900 text-white">
       {/* Static Background Image */}
-      <img src="/hero-temple.jpg" alt="Guruvayoor Temple" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" />
+      <Image 
+        src="/hero-temple.jpg" 
+        alt="Guruvayoor Temple" 
+        fill
+        priority
+        className="object-cover opacity-30 mix-blend-overlay" 
+        sizes="100vw"
+      />
 
       {/* Atmospheric Lighting Gradients */}
       <div

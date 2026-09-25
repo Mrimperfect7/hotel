@@ -75,6 +75,7 @@ hotelsRouter.get(
         roomTypes: h.roomTypes.map((r) => ({ name: r.name, pricePaise: r.basePricePaise, ac: r.acAvailable })),
         amenities: h.amenities.map((a) => a.amenity.key),
         isFeatured: h.isFeatured,
+        isVerified: h.isVerified,
       })),
     });
   })

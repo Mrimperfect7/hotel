@@ -145,6 +145,9 @@ model User {
   rides             Ride[]
   foodOrders        FoodOrder[]
   trips             Trip[]
+  verifiedDocuments DriverDocument[]
+  supportTickets    SupportTicket[]
+  loyaltyAccount    LoyaltyAccount?
 
   @@index([role])
   @@index([isBlocked])
@@ -224,6 +227,10 @@ model Hotel {
   lng           Float
   /// Meters to Guruvayoor Temple — computed from coordinates, overridden by admin if needed
   distanceMeters Int?
+  walkingDistanceMeters Int?
+  drivingDistanceMeters Int?
+  walkingTimeMinutes    Int?
+  isVerified            Boolean     @default(false)
   starRating    Int         @default(0)
   checkInTime   String      @default("12:00")
   checkOutTime  String      @default("11:00")
@@ -584,6 +591,7 @@ model Guide {
   rejectionReason String?        @db.Text
   ratingAvg       Float          @default(0)
   reviewCount     Int            @default(0)
+  isVerified      Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   deletedAt       DateTime?
@@ -646,6 +654,7 @@ model Driver {
   status          ProviderStatus @default(PENDING)
   ratingAvg       Float          @default(0)
   reviewCount     Int            @default(0)
+  isVerified      Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   razorpayAccountId String?
@@ -653,6 +662,7 @@ model Driver {
   user            User           @relation(fields: [userId], references: [id])
   vehicle         Vehicle?
   rides           Ride[]
+  documents       DriverDocument[]
 }
 
 model Vehicle {
@@ -666,6 +676,42 @@ model Vehicle {
   updatedAt       DateTime @updatedAt
 
   driver          Driver   @relation(fields: [driverId], references: [id])
+}
+
+enum DocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum DriverDocumentType {
+  DRIVING_LICENSE
+  VEHICLE_RC
+  INSURANCE
+  PUC
+  COMMERCIAL_PERMIT
+  FITNESS_CERTIFICATE
+  IDENTITY_DOCUMENT
+  OTHER
+}
+
+model DriverDocument {
+  id              String             @id @default(uuid())
+  driverId        String
+  docType         DriverDocumentType
+  docNumber       String?
+  issueDate       DateTime?          @db.Date
+  expiryDate      DateTime?          @db.Date
+  status          DocumentStatus     @default(PENDING)
+  privateUrl      String
+  rejectionReason String?
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  uploadedAt      DateTime           @default(now())
+
+  driver          Driver             @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  admin           User?              @relation(fields: [verifiedBy], references: [id])
 }
 
 enum RideStatus {
@@ -721,6 +767,7 @@ model Restaurant {
   status          ProviderStatus @default(PENDING)
   ratingAvg       Float          @default(0)
   reviewCount     Int            @default(0)
+  isVerified      Boolean        @default(false)
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   razorpayAccountId String?
@@ -804,6 +851,7 @@ enum TripItemType {
 
 model Trip {
   id         String     @id @default(uuid())
+  tripCode   String     @unique
   customerId String
   name       String     @default("My Guruvayoor Trip")
   startDate  DateTime?  @db.Date
@@ -813,6 +861,7 @@ model Trip {
 
   customer   User       @relation(fields: [customerId], references: [id])
   items      TripItem[]
+  supportTickets SupportTicket[]
 }
 
 model TripItem {
@@ -826,4 +875,64 @@ model TripItem {
   createdAt  DateTime     @default(now())
 
   trip       Trip         @relation(fields: [tripId], references: [id])
+}
+
+// ── PHASE 3 & 4: SUPPORT AND LOYALTY ──────────────────────────────────────────
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model SupportTicket {
+  id          String       @id @default(uuid())
+  customerId  String
+  tripId      String?
+  category    String       // HOTEL_ISSUE, RIDE_ISSUE, GUIDE_ISSUE, FOOD_ISSUE, LOST_ITEM, CONCIERGE, OTHER
+  subject     String
+  description String       @db.Text
+  status      TicketStatus @default(OPEN)
+  resolvedAt  DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  customer    User         @relation(fields: [customerId], references: [id])
+  trip        Trip?        @relation(fields: [tripId], references: [id])
+}
+
+model LoyaltyTier {
+  id              String   @id @default(uuid())
+  name            String   // RETURNING_CUSTOMER, LOYAL_TRAVELLER, PREMIUM_TRAVELLER
+  minBookings     Int      @default(0)
+  discountPercent Int      @default(0)
+  maxDiscountPaise Int?
+  isActive        Boolean  @default(true)
+  accounts        LoyaltyAccount[]
+}
+
+model LoyaltyAccount {
+  id            String   @id @default(uuid())
+  customerId    String   @unique
+  tierId        String
+  completedBookings Int  @default(0)
+  totalSpentPaise Int    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  customer      User     @relation(fields: [customerId], references: [id])
+  tier          LoyaltyTier @relation(fields: [tierId], references: [id])
+  transactions  LoyaltyTransaction[]
+}
+
+model LoyaltyTransaction {
+  id              String   @id @default(uuid())
+  accountId       String
+  bookingType     String   // HOTEL, RIDE, GUIDE, FOOD
+  entityId        String
+  amountSpentPaise Int
+  createdAt       DateTime @default(now())
+
+  account         LoyaltyAccount @relation(fields: [accountId], references: [id])
 }

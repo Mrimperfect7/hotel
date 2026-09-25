@@ -14,8 +14,9 @@ tripsRouter.get('/me', requireAuth, asyncH(async (req, res) => {
   });
 
   if (!trip) {
+    const tripCode = `NMG-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
     trip = await prisma.trip.create({
-      data: { customerId: req.auth!.id, name: "My Guruvayoor Trip" },
+      data: { customerId: req.auth!.id, name: "My Guruvayoor Trip", tripCode },
       include: { items: true }
     });
   }

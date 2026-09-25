@@ -1,8 +1,4 @@
-'use client';
-
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
 import { HotelCard, type HotelCardData } from '@/components/hotel-card';
 import { HeroSection } from '@/components/hero-section';
 import { Castle, Users, Coins, Snowflake, Car, Heart, Building2, Map, Utensils } from 'lucide-react';
@@ -23,14 +19,23 @@ const SERVICES = [
   { href: '/food', icon: <Utensils className="w-10 h-10 text-gold-500 mx-auto" />, title: 'Food', desc: 'Discover and order food nearby' },
 ];
 
-export default function HomePage() {
-  const [featured, setFeatured] = useState<HotelCardData[]>([]);
-  const [nearest, setNearest] = useState<HotelCardData[]>([]);
+async function getHotels(query: string) {
+  try {
+    const api = process.env.NEXT_PUBLIC_API_ORIGIN || 'http://localhost:4000';
+    const res = await fetch(`${api}/api/hotels?${query}`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.hotels || []) as HotelCardData[];
+  } catch (e) {
+    return [];
+  }
+}
 
-  useEffect(() => {
-    api.get<{ hotels: HotelCardData[] }>('/api/hotels?limit=4&sort=rating').then((r) => setFeatured(r.hotels)).catch(() => {});
-    api.get<{ hotels: HotelCardData[] }>('/api/hotels?limit=3&sort=nearest').then((r) => setNearest(r.hotels)).catch(() => {});
-  }, []);
+export default async function HomePage() {
+  const [featured, nearest] = await Promise.all([
+    getHotels('limit=4&sort=rating'),
+    getHotels('limit=3&sort=nearest')
+  ]);
 
   return (
     <div>
@@ -111,6 +116,13 @@ export default function HomePage() {
           <Link href="/list-your-service" className="btn-gold px-6 py-3 text-base">Join as Partner →</Link>
         </div>
       </section>
+
+      {/* Plan Trip Floating CTA */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Link href="/plan-trip" className="btn-gold shadow-2xl py-4 px-6 text-lg rounded-full animate-bounce">
+          PLAN MY TRIP 🛕
+        </Link>
+      </div>
     </div>
   );
 }

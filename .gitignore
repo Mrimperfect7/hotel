@@ -37,3 +37,4 @@ coverage/
 .freebuff/
 scripts/pg.zip
 scripts/*.zip
+jdk/

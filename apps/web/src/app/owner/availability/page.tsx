@@ -22,7 +22,7 @@ export default function OwnerAvailabilityPage() {
     if (!hotelId) return;
     api.get<{ days: DayRow[] }>(`/api/owner/availability?hotelId=${hotelId}&month=${month}`, true)
       .then((r) => setDays(r.days))
-      .catch(() => {});
+      .catch((err) => setError(err.message || 'Could not load availability data.'));
   };
 
   useEffect(() => {
