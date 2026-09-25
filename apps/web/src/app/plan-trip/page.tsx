@@ -21,10 +21,30 @@ export default function PlanTripPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (step === 1) {
+      if (!formData.arrivalDate || !formData.departureDate) {
+        alert('Please select both Arrival and Departure dates.');
+        return;
+      }
+      if (new Date(formData.departureDate) < new Date(formData.arrivalDate)) {
+        alert('Departure date cannot be before arrival date.');
+        return;
+      }
+    }
+
     if (step < 3) {
       setStep(step + 1);
       return;
     }
+
+    const { getToken } = require('@/lib/api');
+    if (!getToken()) {
+      alert('Please log in to save and generate your trip.');
+      router.push('/login');
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await api.post('/api/plan-trip', {
@@ -33,9 +53,9 @@ export default function PlanTripPage() {
         departureDate: new Date(formData.departureDate).toISOString(),
       }, true);
       router.push('/my-trip');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error generating trip');
+      alert(err?.message || 'Error generating trip');
     } finally {
       setLoading(false);
     }
