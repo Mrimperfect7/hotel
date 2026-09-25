@@ -1,8 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { api } from '@/lib/api';
 
 export default function PlanTripPage() {
@@ -49,8 +47,7 @@ export default function PlanTripPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1 bg-temple-50 py-12">
+            <main className="flex-1 bg-temple-50 py-12">
         <div className="mx-auto max-w-2xl px-4">
           <div className="text-center mb-8">
             <h1 className="font-display text-4xl font-bold text-temple-800">Plan My Guruvayoor Trip</h1>
@@ -136,7 +133,6 @@ export default function PlanTripPage() {
           </form>
         </div>
       </main>
-      <SiteFooter />
-    </div>
+          </div>
   );
 }

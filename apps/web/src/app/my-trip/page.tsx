@@ -1,7 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { api } from '@/lib/api';
 
 type TripItem = {
@@ -31,8 +29,7 @@ export default function MyTripPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1 bg-temple-50/50 py-12">
+            <main className="flex-1 bg-temple-50/50 py-12">
         <div className="mx-auto max-w-3xl px-4">
           <div className="mb-8">
             <h1 className="font-display text-3xl font-bold text-temple-800">
@@ -76,7 +73,6 @@ export default function MyTripPage() {
           )}
         </div>
       </main>
-      <SiteFooter />
-    </div>
+          </div>
   );
 }

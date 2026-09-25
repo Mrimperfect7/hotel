@@ -1,7 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { api } from '@/lib/api';
 import { Crown, Sparkles, Gift } from 'lucide-react';
 
@@ -30,8 +28,7 @@ export default function LoyaltyPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1 bg-temple-50 py-12">
+            <main className="flex-1 bg-temple-50 py-12">
         <div className="mx-auto max-w-4xl px-4">
           <div className="text-center mb-10">
             <h1 className="font-display text-4xl font-bold text-temple-800 flex items-center justify-center gap-3">
@@ -107,7 +104,6 @@ export default function LoyaltyPage() {
           )}
         </div>
       </main>
-      <SiteFooter />
-    </div>
+          </div>
   );
 }

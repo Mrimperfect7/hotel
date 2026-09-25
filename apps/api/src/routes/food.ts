@@ -68,7 +68,7 @@ foodRouter.post('/orders', requireAuth, asyncH(async (req, res) => {
   });
 
   const trip = await prisma.trip.findFirst({ where: { customerId: req.auth!.id } })
-    || await prisma.trip.create({ data: { customerId: req.auth!.id, name: "My Guruvayoor Trip" } });
+    || await prisma.trip.create({ data: { customerId: req.auth!.id, name: "My Guruvayoor Trip", tripCode: `NMG-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}` } });
 
   await prisma.tripItem.create({
     data: {

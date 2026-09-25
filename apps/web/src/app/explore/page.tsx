@@ -1,6 +1,4 @@
 'use client';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Map, MapPin } from 'lucide-react';
 
 const PLACES = [
@@ -14,8 +12,7 @@ const PLACES = [
 export default function ExplorePage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1 bg-temple-50 py-12">
+            <main className="flex-1 bg-temple-50 py-12">
         <div className="mx-auto max-w-5xl px-4">
           <div className="text-center mb-10">
             <h1 className="font-display text-4xl font-bold text-temple-800">Explore Guruvayoor</h1>
@@ -51,7 +48,6 @@ export default function ExplorePage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
-    </div>
+          </div>
   );
 }

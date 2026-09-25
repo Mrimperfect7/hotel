@@ -45,7 +45,7 @@ loyaltyRouter.post('/refresh/:customerId', requireAuth, asyncH(async (req, res) 
     throw ApiError.forbidden('Admin only');
   }
   
-  const customerId = req.params.customerId;
+  const customerId = req.params.customerId as string;
   
   // Example recalculation logic for completed hotel bookings:
   const completedBookings = await prisma.booking.count({

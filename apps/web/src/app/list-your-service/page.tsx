@@ -1,14 +1,11 @@
 'use client';
 import Link from 'next/link';
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import { Car, Building2, Map, Utensils } from 'lucide-react';
 
 export default function ListYourServicePage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1 bg-temple-50 py-12">
+            <main className="flex-1 bg-temple-50 py-12">
         <div className="mx-auto max-w-4xl px-4 text-center">
           <h1 className="font-display text-4xl font-bold text-temple-800">Become a Partner</h1>
           <p className="mt-4 text-lg text-temple-600">
@@ -46,7 +43,6 @@ export default function ListYourServicePage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
-    </div>
+          </div>
   );
 }

@@ -1,12 +1,9 @@
-import { SiteHeader } from '@/components/site-header';
-import { SiteFooter } from '@/components/site-footer';
 import Link from 'next/link';
 
 export default function GuidesPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1 bg-temple-50/50 py-12">
+            <main className="flex-1 bg-temple-50/50 py-12">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex justify-between items-center mb-8">
             <h1 className="font-display text-3xl font-bold text-temple-800">Local Guides</h1>
@@ -20,7 +17,6 @@ export default function GuidesPage() {
           </div>
         </div>
       </main>
-      <SiteFooter />
-    </div>
+          </div>
   );
 }
