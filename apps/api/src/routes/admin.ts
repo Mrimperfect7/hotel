@@ -576,3 +576,10 @@ adminRouter.patch('/restaurants/:id', asyncH(async (req, res) => {
   await audit(req, `RESTAURANT_${action}`, 'Restaurant', restaurant.id, { to: toStatus, reason });
   res.json({ restaurant });
 }));
+
+adminRouter.get('/subscribers', asyncH(async (req, res) => {
+  const subscribers = await prisma.marketingSubscriber.findMany({
+    orderBy: { createdAt: 'desc' }
+  });
+  res.json({ subscribers });
+}));
