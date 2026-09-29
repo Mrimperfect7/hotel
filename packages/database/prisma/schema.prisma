@@ -936,3 +936,18 @@ model LoyaltyTransaction {
 
   account         LoyaltyAccount @relation(fields: [accountId], references: [id])
 }
+
+// ── Marketing & CRM ──────────────────────────────────────────────────────────
+
+model MarketingSubscriber {
+  id        String   @id @default(uuid())
+  name      String
+  whatsapp  String   @unique
+  email     String?
+  city      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, createdAt])
+}
