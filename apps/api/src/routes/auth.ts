@@ -12,6 +12,8 @@ import { OAuth2Client } from 'google-auth-library';
 import { config } from '@gsv/config';
 
 const googleClient = new OAuth2Client(config.googleClientId);
+
+
 export const authRouter = Router();
 
 function clientMeta(req: { headers: Record<string, unknown>; ip?: string }) {
@@ -192,17 +194,15 @@ authRouter.post(
     const { credential } = req.body;
     if (!credential) throw ApiError.badRequest('Missing Google credential');
 
-    const { OAuth2Client } = require('google-auth-library');
-    const googleClient = new OAuth2Client(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'mock-client-id-needs-real-one.apps.googleusercontent.com');
-    
     let payload;
     try {
       const ticket = await googleClient.verifyIdToken({
         idToken: credential,
-        audience: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'mock-client-id-needs-real-one.apps.googleusercontent.com',
+        audience: config.googleClientId,
       });
       payload = ticket.getPayload();
     } catch (e) {
+      console.error('Google Auth Error:', e);
       throw ApiError.unauthorized('Invalid Google token');
     }
 
