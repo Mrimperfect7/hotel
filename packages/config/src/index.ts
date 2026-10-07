@@ -93,5 +93,6 @@ export const config = (() => {
     clientEmail: env('FIREBASE_CLIENT_EMAIL', ''),
     privateKey: env('FIREBASE_PRIVATE_KEY', ''),
   },
+  googleClientId: env('GOOGLE_CLIENT_ID', ''),
   } as const;
 })();

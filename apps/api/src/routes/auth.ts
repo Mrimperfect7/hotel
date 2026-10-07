@@ -8,7 +8,10 @@ import {
 import { requireAuth } from '../middleware/requireAuth.js';
 import { authLimiter } from '../middleware/rateLimiters.js';
 import { registerSchema, loginSchema } from '@gsv/types';
+import { OAuth2Client } from 'google-auth-library';
+import { config } from '@gsv/config';
 
+const googleClient = new OAuth2Client(config.googleClientId);
 export const authRouter = Router();
 
 function clientMeta(req: { headers: Record<string, unknown>; ip?: string }) {
@@ -84,6 +87,52 @@ authRouter.post(
     }
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    const accessToken = signAccessToken({ id: user.id, role: user.role, name: user.name, email: user.email, phone: user.phone });
+    const refreshToken = await issueRefreshToken(user.id, clientMeta(req).device, clientMeta(req).ip);
+    res.json({ accessToken, refreshToken, user: { id: user.id, role: user.role, name: user.name, email: user.email } });
+  })
+);
+
+/**
+ * POST /api/auth/google — Login or register with Google OAuth
+ */
+authRouter.post(
+  '/google',
+  authLimiter,
+  asyncH(async (req, res) => {
+    const { credential, role } = req.body;
+    if (!credential) throw ApiError.badRequest('Missing Google credential');
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: config.googleClientId,
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) throw ApiError.unauthorized('Invalid Google token');
+
+    const email = payload.email.toLowerCase();
+    
+    let user = await prisma.user.findFirst({ where: { email } });
+    if (!user) {
+      const userRole = role === 'HOTEL_OWNER' ? 'HOTEL_OWNER' : 'CUSTOMER';
+      user = await prisma.user.create({
+        data: {
+          email,
+          name: payload.name || 'Google User',
+          role: userRole,
+          emailVerified: payload.email_verified || false,
+          avatarUrl: payload.picture,
+          customerProfile: userRole === 'CUSTOMER' ? { create: {} } : undefined,
+          ownerProfile: userRole === 'HOTEL_OWNER'
+            ? { create: { ownerName: payload.name || 'Google User', phone: '', email } }
+            : undefined,
+        }
+      });
+    }
+
+    if (user.isBlocked || user.deletedAt) throw ApiError.unauthorized('Account unavailable');
+
+    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date(), avatarUrl: user.avatarUrl || payload.picture } });
     const accessToken = signAccessToken({ id: user.id, role: user.role, name: user.name, email: user.email, phone: user.phone });
     const refreshToken = await issueRefreshToken(user.id, clientMeta(req).device, clientMeta(req).ip);
     res.json({ accessToken, refreshToken, user: { id: user.id, role: user.role, name: user.name, email: user.email } });
