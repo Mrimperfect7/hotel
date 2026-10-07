@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 
 import { Chatbot } from '@/components/chatbot';
+import { GoogleAuthWrapper } from '@/components/google-auth-wrapper';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
@@ -26,10 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <SiteHeader />
-        <main className="min-h-[70vh]">{children}</main>
-        <SiteFooter />
-        <Chatbot />
+        <GoogleAuthWrapper>
+          <SiteHeader />
+          <main className="min-h-[70vh]">{children}</main>
+          <SiteFooter />
+          <Chatbot />
+        </GoogleAuthWrapper>
       </body>
     </html>
   );

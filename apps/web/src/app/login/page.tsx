@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { api, ApiError, setTokens } from '@/lib/api';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 
 function Login() {
   const router = useRouter();
@@ -59,7 +59,6 @@ function Login() {
   }
 
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
       <div className="mx-auto max-w-md px-4 py-14">
         <div className="card p-8 shadow-xl border border-temple-100 bg-white/90 backdrop-blur">
           <div className="flex items-center gap-3 mb-6">
@@ -135,7 +134,6 @@ function Login() {
           </p>
         </div>
       </div>
-    </GoogleOAuthProvider>
   );
 }
 

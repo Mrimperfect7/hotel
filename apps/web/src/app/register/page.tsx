@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, Suspense, useEffect } from 'react';
 import { api, ApiError, setTokens } from '@/lib/api';
 import { Eye, EyeOff, UserPlus, Building2, Luggage, Car, Map, Utensils } from 'lucide-react';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 
 const ROLES = [
   { id: 'CUSTOMER', label: 'I travel & book', icon: Luggage },
@@ -84,7 +84,6 @@ function RegisterForm() {
   }
 
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
       <div className="mx-auto max-w-2xl px-4 py-14">
         <div className="card p-8 shadow-xl border border-temple-100 bg-white/90 backdrop-blur">
           <div className="flex items-center gap-3 mb-6">
@@ -181,7 +180,6 @@ function RegisterForm() {
           </p>
         </div>
       </div>
-    </GoogleOAuthProvider>
   );
 }
 

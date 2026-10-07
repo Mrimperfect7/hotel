@@ -183,3 +183,54 @@ authRouter.get(
     res.json({ user });
   })
 );
+
+/** POST /api/auth/google */
+authRouter.post(
+  '/google',
+  authLimiter,
+  asyncH(async (req, res) => {
+    const { credential } = req.body;
+    if (!credential) throw ApiError.badRequest('Missing Google credential');
+
+    const { OAuth2Client } = require('google-auth-library');
+    const googleClient = new OAuth2Client(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'mock-client-id-needs-real-one.apps.googleusercontent.com');
+    
+    let payload;
+    try {
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'mock-client-id-needs-real-one.apps.googleusercontent.com',
+      });
+      payload = ticket.getPayload();
+    } catch (e) {
+      throw ApiError.unauthorized('Invalid Google token');
+    }
+
+    if (!payload || !payload.email) throw ApiError.unauthorized('Google account missing email');
+
+    const email = payload.email.toLowerCase();
+    
+    let user = await prisma.user.findFirst({
+      where: { email, deletedAt: null, isBlocked: false },
+    });
+
+    if (!user) {
+      // Create a new CUSTOMER user
+      user = await prisma.user.create({
+        data: {
+          name: payload.name || 'Google User',
+          email: email,
+          role: 'CUSTOMER',
+          emailVerified: true,
+          customerProfile: { create: {} }
+        }
+      });
+    }
+
+    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    const accessToken = signAccessToken({ id: user.id, role: user.role, name: user.name, email: user.email, phone: user.phone });
+    const refreshToken = await issueRefreshToken(user.id, clientMeta(req).device, clientMeta(req).ip);
+    res.json({ accessToken, refreshToken, user: { id: user.id, role: user.role, name: user.name, email: user.email } });
+  })
+);
+
