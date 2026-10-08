@@ -583,3 +583,78 @@ adminRouter.get('/subscribers', asyncH(async (req, res) => {
   });
   res.json({ subscribers });
 }));
+
+// ── Namma Driver Verification & Ecosystem ────────────────────────────────────
+
+// GET /api/admin/drivers/pending
+adminRouter.get('/drivers/pending', requireAdmin, asyncH(async (req, res) => {
+  const pendingDocs = await prisma.driverDocument.findMany({
+    where: { status: 'PENDING' },
+    include: { driver: { include: { user: true } } }
+  });
+  res.json({ data: pendingDocs });
+}));
+
+// PATCH /api/admin/drivers/documents/:docId/verify
+adminRouter.patch('/drivers/documents/:docId/verify', requireAdmin, asyncH(async (req, res) => {
+  const { status, rejectionReason } = z.object({
+    status: z.enum(['VERIFIED', 'REJECTED']),
+    rejectionReason: z.string().optional()
+  }).parse(req.body);
+
+  const doc = await prisma.driverDocument.update({
+    where: { id: req.params.docId },
+    data: {
+      status,
+      rejectionReason,
+      verifiedBy: req.auth!.id,
+      verifiedAt: new Date()
+    },
+    include: { driver: true }
+  });
+
+  // Auto-approve driver if all docs verified
+  const pendingDocs = await prisma.driverDocument.count({
+    where: { driverId: doc.driverId, status: 'PENDING' }
+  });
+
+  if (pendingDocs === 0 && status === 'VERIFIED') {
+    const allVerified = await prisma.driverDocument.count({
+      where: { driverId: doc.driverId, status: 'VERIFIED' }
+    });
+    // E.g. at least 3 docs required
+    if (allVerified >= 3) {
+      await prisma.driver.update({
+        where: { id: doc.driverId },
+        data: { status: 'APPROVED', isVerified: true }
+      });
+    }
+  }
+
+  res.json({ data: doc });
+}));
+
+// GET /api/admin/support/tickets
+adminRouter.get('/support/tickets', requireAdmin, asyncH(async (req, res) => {
+  const tickets = await prisma.supportTicket.findMany({
+    where: { status: 'OPEN' },
+    orderBy: { createdAt: 'asc' },
+    include: { customer: true }
+  });
+  res.json({ data: tickets });
+}));
+
+// PATCH /api/admin/support/tickets/:id
+adminRouter.patch('/support/tickets/:id', requireAdmin, asyncH(async (req, res) => {
+  const { status, response } = z.object({
+    status: z.enum(['IN_PROGRESS', 'RESOLVED', 'CLOSED']),
+    response: z.string().optional()
+  }).parse(req.body);
+
+  const ticket = await prisma.supportTicket.update({
+    where: { id: req.params.id },
+    data: { status, updatedAt: new Date() }
+  });
+  res.json({ data: ticket });
+}));
+

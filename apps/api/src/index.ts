@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import path from 'node:path';
 // Load repo-root .env for compiled (node dist) runs; tsx dev loads it via @gsv/config too.
 import '@gsv/config';
@@ -19,6 +19,7 @@ import { planRouter } from './routes/plan.js';
 import { supportRouter } from './routes/support.js';
 import { loyaltyRouter } from './routes/loyalty.js';
 import { chatRouter } from './routes/chat.js';
+import { packagesRouter } from './routes/packages.js';
 
 const app = buildApp();
 
@@ -50,6 +51,7 @@ app.use('/api/plan-trip', planRouter);
 app.use('/api/support', supportRouter);
 app.use('/api/loyalty', loyaltyRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/packages', packagesRouter);
 
 // Uploaded images (dev local storage; prod uses Cloudinary CDN).
 app.use('/uploads', express.static(path.resolve('uploads'), { fallthrough: true, maxAge: '7d' }));

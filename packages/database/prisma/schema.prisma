@@ -148,6 +148,7 @@ model User {
   verifiedDocuments DriverDocument[]
   supportTickets    SupportTicket[]
   loyaltyAccount    LoyaltyAccount?
+  packageBookings   PackageBooking[]
 
   @@index([role])
   @@index([isBlocked])
@@ -190,6 +191,7 @@ model Customer {
   city          String?
   state         String?
   preferredLang String   @default("en")
+  seniorFriendly Boolean @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -856,11 +858,13 @@ model Trip {
   name       String     @default("My Guruvayoor Trip")
   startDate  DateTime?  @db.Date
   endDate    DateTime?  @db.Date
+  seniorFriendly Boolean @default(false)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
   customer   User       @relation(fields: [customerId], references: [id])
   items      TripItem[]
+  memories   JourneyMemory[]
   supportTickets SupportTicket[]
 }
 
@@ -875,6 +879,79 @@ model TripItem {
   createdAt  DateTime     @default(now())
 
   trip       Trip         @relation(fields: [tripId], references: [id])
+}
+
+// ── JOURNEY PACKAGES ─────────────────────────────────────────────────────────
+
+model JourneyPackage {
+  id              String               @id @default(uuid())
+  name            String
+  slug            String               @unique
+  description     String               @db.Text
+  pricePaise      Int
+  discountPaise   Int                  @default(0)
+  validFrom       DateTime?            @db.Date
+  validTo         DateTime?            @db.Date
+  minTravelers    Int                  @default(1)
+  maxTravelers    Int                  @default(10)
+  isActive        Boolean              @default(true)
+  cancellationPolicy String            @db.Text
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  
+  items           JourneyPackageItem[]
+  bookings        PackageBooking[]
+}
+
+model JourneyPackageItem {
+  id              String         @id @default(uuid())
+  packageId       String
+  serviceType     String         // HOTEL, RIDE, GUIDE, FOOD, ACTIVITY
+  description     String
+  isRequired      Boolean        @default(true)
+  
+  package         JourneyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+}
+
+enum PackageBookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model PackageBooking {
+  id              String               @id @default(uuid())
+  packageId       String
+  customerId      String
+  tripId          String?              @unique
+  date            DateTime             @db.Date
+  travelers       Int
+  totalPaise      Int
+  status          PackageBookingStatus @default(PENDING)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  package         JourneyPackage       @relation(fields: [packageId], references: [id])
+  customer        User                 @relation(fields: [customerId], references: [id])
+}
+
+// ── JOURNEY MEMORIES ──────────────────────────────────────────────────────────
+
+model JourneyMemory {
+  id              String     @id @default(uuid())
+  tripId          String
+  title           String     @default("My Guruvayoor Journey")
+  description     String?    @db.Text
+  placesVisited   Int        @default(0)
+  days            Int        @default(1)
+  photos          Json?      // Array of URLs
+  isPublic        Boolean    @default(false)
+  shareCode       String     @unique
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  trip            Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
 }
 
 // ── PHASE 3 & 4: SUPPORT AND LOYALTY ──────────────────────────────────────────
