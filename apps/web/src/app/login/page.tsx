@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { api, ApiError, setTokens } from '@/lib/api';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, AlertTriangle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 
 function Login() {
@@ -28,6 +28,9 @@ function Login() {
       const role = res.user.role;
       if (role === 'ADMIN' || role === 'SUPER_ADMIN') router.push('/admin');
       else if (role === 'HOTEL_OWNER') router.push('/owner');
+      else if (role === 'DRIVER') router.push('/driver');
+      else if (role === 'GUIDE') router.push('/guide');
+      else if (role === 'RESTAURANT_OWNER') router.push('/restaurant');
       else router.push(next);
       router.refresh();
     } catch (err) {
@@ -49,6 +52,9 @@ function Login() {
       const role = res.user.role;
       if (role === 'ADMIN' || role === 'SUPER_ADMIN') router.push('/admin');
       else if (role === 'HOTEL_OWNER') router.push('/owner');
+      else if (role === 'DRIVER') router.push('/driver');
+      else if (role === 'GUIDE') router.push('/guide');
+      else if (role === 'RESTAURANT_OWNER') router.push('/restaurant');
       else router.push(next);
       router.refresh();
     } catch (err) {
@@ -103,7 +109,7 @@ function Login() {
             </div>
             {error && (
               <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600 flex items-start gap-2">
-                <span className="mt-0.5">⚠️</span>
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                 <p>{error}</p>
               </div>
             )}

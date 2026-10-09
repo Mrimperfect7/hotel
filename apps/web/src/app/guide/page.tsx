@@ -1,6 +1,6 @@
 'use client';
-
 import { Suspense, useEffect, useState } from 'react';
+import { AlertTriangle, Calendar, Clock, Wallet, Bell } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatINR, fmtDate } from '@/lib/format';
 
@@ -22,9 +22,12 @@ function Dash() {
   return (
     <div>
       {d.guide.status !== 'APPROVED' && (
-        <div className="card mb-6 border-red-300 bg-red-50 p-4 text-sm text-red-700">
-          ⚠️ <strong>Account not active!</strong> Your guide profile is currently {d.guide.status}. 
-          You will not receive new bookings until an admin approves your profile.
+        <div className="card mb-6 border-red-300 bg-red-50 p-4 text-sm text-red-700 flex items-start gap-2">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <div>
+            <strong>Account not active!</strong> Your guide profile is currently {d.guide.status}. 
+            You will not receive new bookings until an admin approves your profile.
+          </div>
         </div>
       )}
 
@@ -37,20 +40,21 @@ function Dash() {
 
       {d.stats.pending > 0 && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gold-50 p-4 ring-1 ring-gold-200">
-          <p className="text-sm font-semibold text-gold-800">
-            🔔 You have {d.stats.pending} pending booking request(s)!
+          <p className="text-sm font-semibold text-gold-800 flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            <span>You have {d.stats.pending} pending booking request(s)!</span>
           </p>
         </div>
       )}
 
       <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
         {[
-          ['Upcoming Bookings', String(d.stats.upcoming), '📅'],
-          ['Pending Requests', String(d.stats.pending), '⏳'],
-          ['Total Revenue', formatINR(d.stats.revenuePaise), '💰'],
-        ].map(([label, value, icon]) => (
+          { label: 'Upcoming Bookings', value: String(d.stats.upcoming), icon: <Calendar className="w-6 h-6 text-temple-600" /> },
+          { label: 'Pending Requests', value: String(d.stats.pending), icon: <Clock className="w-6 h-6 text-temple-600" /> },
+          { label: 'Total Revenue', value: formatINR(d.stats.revenuePaise), icon: <Wallet className="w-6 h-6 text-temple-600" /> },
+        ].map(({ label, value, icon }) => (
           <div key={label} className="card p-4">
-            <div className="text-xl">{icon}</div>
+            <div className="mb-2">{icon}</div>
             <div className="mt-1 text-xl font-bold text-temple-700">{value}</div>
             <div className="text-[11px] uppercase tracking-wide text-temple-400">{label}</div>
           </div>

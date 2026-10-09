@@ -4,20 +4,21 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, getToken } from '@/lib/api';
+import { TrendingUp, Clock, Building, UserCheck, Car, Utensils, Receipt, Users, Star, Settings, Lock, Smartphone, ShieldCheck } from 'lucide-react';
 
 const NAV = [
-  { href: '/admin', label: 'Overview', icon: '📈' },
-  { href: '/admin/hotels?status=PENDING', label: 'Verification Queue', icon: '⏳' },
-  { href: '/admin/hotels', label: 'Hotels', icon: '🏨' },
-  { href: '/admin/guides', label: 'Guides', icon: '🧑‍🏫' },
-  { href: '/admin/drivers', label: 'Drivers', icon: '🚕' },
-  { href: '/admin/restaurants', label: 'Restaurants', icon: '🍛' },
-  { href: '/admin/bookings', label: 'Bookings', icon: '🧾' },
-  { href: '/admin/users', label: 'Users', icon: '👥' },
-  { href: '/admin/reviews', label: 'Reviews', icon: '⭐' },
-  { href: '/admin/settings', label: 'Settings', icon: '⚙️' },
-  { href: '/admin/audit', label: 'Audit Log', icon: '🔐' },
-  { href: '/admin/subscribers', label: 'Marketing', icon: '📱' },
+  { href: '/admin', label: 'Overview', icon: <TrendingUp className="w-4 h-4" /> },
+  { href: '/admin/hotels?status=PENDING', label: 'Verification Queue', icon: <Clock className="w-4 h-4" /> },
+  { href: '/admin/hotels', label: 'Hotels', icon: <Building className="w-4 h-4" /> },
+  { href: '/admin/guides', label: 'Guides', icon: <UserCheck className="w-4 h-4" /> },
+  { href: '/admin/drivers', label: 'Drivers', icon: <Car className="w-4 h-4" /> },
+  { href: '/admin/restaurants', label: 'Restaurants', icon: <Utensils className="w-4 h-4" /> },
+  { href: '/admin/bookings', label: 'Bookings', icon: <Receipt className="w-4 h-4" /> },
+  { href: '/admin/users', label: 'Users', icon: <Users className="w-4 h-4" /> },
+  { href: '/admin/reviews', label: 'Reviews', icon: <Star className="w-4 h-4" /> },
+  { href: '/admin/settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
+  { href: '/admin/audit', label: 'Audit Log', icon: <Lock className="w-4 h-4" /> },
+  { href: '/admin/subscribers', label: 'Marketing', icon: <Smartphone className="w-4 h-4" /> },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -41,8 +42,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
       <aside className="hidden w-56 shrink-0 md:block">
         <div className="card sticky top-20 p-3">
-          <p className="px-2 pb-2 text-[11px] font-bold uppercase tracking-wider text-temple-400">
-            🛕 Admin Console
+          <p className="px-2 pb-2 text-[11px] font-bold uppercase tracking-wider text-temple-400 flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5" /> Admin Console
           </p>
           {NAV.map((n) => (
             <Link

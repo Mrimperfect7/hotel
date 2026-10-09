@@ -105,36 +105,64 @@ authRouter.post(
     const { credential, role } = req.body;
     if (!credential) throw ApiError.badRequest('Missing Google credential');
 
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: config.googleClientId,
-    });
-    const payload = ticket.getPayload();
-    if (!payload || !payload.email) throw ApiError.unauthorized('Invalid Google token');
+    let payload;
+    try {
+      if (!config.googleClientId || config.googleClientId.startsWith('mock-')) {
+        throw new Error('Google Client ID is not configured on the server');
+      }
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: config.googleClientId,
+      });
+      payload = ticket.getPayload();
+    } catch (e) {
+      console.error('Google Auth Error:', e);
+      if (e instanceof Error && e.message === 'Google Client ID is not configured on the server') {
+        throw ApiError.internal('Google authentication is not configured on the server.');
+      }
+      throw ApiError.unauthorized('Invalid Google token');
+    }
+
+    if (!payload || !payload.email) throw ApiError.unauthorized('Google account missing email');
 
     const email = payload.email.toLowerCase();
     
-    let user = await prisma.user.findFirst({ where: { email } });
+    let user = await prisma.user.findFirst({
+      where: { email },
+    });
+
+    if (user && (user.isBlocked || user.deletedAt)) {
+      throw ApiError.unauthorized('Account unavailable');
+    }
+
+    if (user && user.passwordHash) {
+      throw ApiError.conflict('An account with this email already exists. Please sign in with your email and password to link accounts.');
+    }
+
     if (!user) {
-      const userRole = role === 'HOTEL_OWNER' ? 'HOTEL_OWNER' : 'CUSTOMER';
+      // Only allow CUSTOMER creation by default through Google Login
+      // Provider roles should be requested explicitly or verified separately.
       user = await prisma.user.create({
         data: {
           email,
           name: payload.name || 'Google User',
-          role: userRole,
+          role: 'CUSTOMER',
           emailVerified: payload.email_verified || false,
           avatarUrl: payload.picture,
-          customerProfile: userRole === 'CUSTOMER' ? { create: {} } : undefined,
-          ownerProfile: userRole === 'HOTEL_OWNER'
-            ? { create: { ownerName: payload.name || 'Google User', phone: '', email } }
-            : undefined,
+          customerProfile: { create: {} }
         }
       });
     }
 
-    if (user.isBlocked || user.deletedAt) throw ApiError.unauthorized('Account unavailable');
-
-    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date(), avatarUrl: user.avatarUrl || payload.picture } });
+    // Preserve existing account ID and Role. Update lastLogin and avatar.
+    await prisma.user.update({ 
+      where: { id: user.id }, 
+      data: { 
+        lastLoginAt: new Date(), 
+        avatarUrl: user.avatarUrl || payload.picture 
+      } 
+    });
+    
     const accessToken = signAccessToken({ id: user.id, role: user.role, name: user.name, email: user.email, phone: user.phone });
     const refreshToken = await issueRefreshToken(user.id, clientMeta(req).device, clientMeta(req).ip);
     res.json({ accessToken, refreshToken, user: { id: user.id, role: user.role, name: user.name, email: user.email } });
@@ -183,54 +211,6 @@ authRouter.get(
     });
     if (!user) throw ApiError.notFound('User not found');
     res.json({ user });
-  })
-);
-
-/** POST /api/auth/google */
-authRouter.post(
-  '/google',
-  authLimiter,
-  asyncH(async (req, res) => {
-    const { credential } = req.body;
-    if (!credential) throw ApiError.badRequest('Missing Google credential');
-
-    let payload;
-    try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken: credential,
-        audience: config.googleClientId,
-      });
-      payload = ticket.getPayload();
-    } catch (e) {
-      console.error('Google Auth Error:', e);
-      throw ApiError.unauthorized('Invalid Google token');
-    }
-
-    if (!payload || !payload.email) throw ApiError.unauthorized('Google account missing email');
-
-    const email = payload.email.toLowerCase();
-    
-    let user = await prisma.user.findFirst({
-      where: { email, deletedAt: null, isBlocked: false },
-    });
-
-    if (!user) {
-      // Create a new CUSTOMER user
-      user = await prisma.user.create({
-        data: {
-          name: payload.name || 'Google User',
-          email: email,
-          role: 'CUSTOMER',
-          emailVerified: true,
-          customerProfile: { create: {} }
-        }
-      });
-    }
-
-    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-    const accessToken = signAccessToken({ id: user.id, role: user.role, name: user.name, email: user.email, phone: user.phone });
-    const refreshToken = await issueRefreshToken(user.id, clientMeta(req).device, clientMeta(req).ip);
-    res.json({ accessToken, refreshToken, user: { id: user.id, role: user.role, name: user.name, email: user.email } });
   })
 );
 

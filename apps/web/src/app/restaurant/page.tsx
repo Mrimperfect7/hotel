@@ -1,6 +1,6 @@
 'use client';
-
 import { Suspense, useEffect, useState } from 'react';
+import { AlertTriangle, Utensils, CheckCircle, Wallet, UtensilsCrossed } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatINR, fmtDate } from '@/lib/format';
 
@@ -42,9 +42,12 @@ function Dash() {
   return (
     <div>
       {d.restaurant.status !== 'APPROVED' && (
-        <div className="card mb-6 border-red-300 bg-red-50 p-4 text-sm text-red-700">
-          ⚠️ <strong>Account not active!</strong> Your restaurant is currently {d.restaurant.status}. 
-          You will not receive new food orders until an admin approves your profile.
+        <div className="card mb-6 border-red-300 bg-red-50 p-4 text-sm text-red-700 flex items-start gap-2">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <div>
+            <strong>Account not active!</strong> Your restaurant is currently {d.restaurant.status}. 
+            You will not receive new food orders until an admin approves your profile.
+          </div>
         </div>
       )}
 
@@ -59,12 +62,12 @@ function Dash() {
 
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
         {[
-          ['Active Orders', String(d.stats.active), '🍳'],
-          ['Orders Completed', String(d.stats.completed), '✅'],
-          ['Total Revenue', formatINR(d.stats.revenuePaise), '💰'],
-        ].map(([label, value, icon]) => (
+          { label: 'Active Orders', value: String(d.stats.active), icon: <Utensils className="w-6 h-6 text-temple-600" /> },
+          { label: 'Orders Completed', value: String(d.stats.completed), icon: <CheckCircle className="w-6 h-6 text-temple-600" /> },
+          { label: 'Total Revenue', value: formatINR(d.stats.revenuePaise), icon: <Wallet className="w-6 h-6 text-temple-600" /> },
+        ].map(({ label, value, icon }) => (
           <div key={label} className="card p-4">
-            <div className="text-xl">{icon}</div>
+            <div className="mb-2">{icon}</div>
             <div className="mt-1 text-xl font-bold text-temple-700">{value}</div>
             <div className="text-[11px] uppercase tracking-wide text-temple-400">{label}</div>
           </div>
@@ -111,8 +114,8 @@ function Dash() {
               ))}
             </div>
           ) : (
-            <div className="p-10 text-center text-temple-400 border border-dashed border-temple-200 rounded-xl">
-              <div className="text-4xl mb-2">🍽️</div>
+            <div className="p-10 text-center text-temple-400 border border-dashed border-temple-200 rounded-xl flex flex-col items-center justify-center">
+              <div className="mb-3 text-temple-300"><UtensilsCrossed className="w-12 h-12" /></div>
               <p>Kitchen is clear. Waiting for orders.</p>
             </div>
           )}

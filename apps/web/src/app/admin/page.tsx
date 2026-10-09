@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { formatINR } from '@/lib/format';
-import { MapMap, ShieldCheck, Car, Users, Headset, Utensils, Route } from 'lucide-react';
+import { Map, ShieldCheck, Car, Users, Headset, Utensils, Route, Building } from 'lucide-react';
 
 type ControlCenterStats = {
   // Ecosystem Overview
@@ -103,7 +103,7 @@ export default function NammaControlCenterPage() {
           <div className="text-[11px] font-bold text-temple-500 uppercase tracking-wide">Live Rides</div>
         </div>
         <div className="card p-4 bg-gradient-to-br from-green-50 to-white border-green-100">
-          <div className="text-2xl mb-2">🏨</div>
+          <Building className="w-6 h-6 text-green-600 mb-2" />
           <div className="text-2xl font-bold text-temple-900">{s.bookings.todayCheckins}</div>
           <div className="text-[11px] font-bold text-temple-500 uppercase tracking-wide">Check-ins Today</div>
         </div>

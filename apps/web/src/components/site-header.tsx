@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api, getToken, clearTokens } from '@/lib/api';
+import { Menu } from 'lucide-react';
 
 type Me = { user: { name: string; role: string } };
 
@@ -43,13 +44,13 @@ export function SiteHeader() {
                 <Link href="/owner" className="text-sm font-semibold text-gold-700">Owner Dashboard</Link>
               )}
               {(user.role === 'GUIDE') && (
-                <Link href="/guide-dashboard" className="text-sm font-semibold text-gold-700">Guide Dashboard</Link>
+                <Link href="/guide" className="text-sm font-semibold text-gold-700">Guide Dashboard</Link>
               )}
               {(user.role === 'DRIVER') && (
-                <Link href="/driver-dashboard" className="text-sm font-semibold text-gold-700">Driver Dashboard</Link>
+                <Link href="/driver" className="text-sm font-semibold text-gold-700">Driver Dashboard</Link>
               )}
               {(user.role === 'RESTAURANT_OWNER') && (
-                <Link href="/restaurant-dashboard" className="text-sm font-semibold text-gold-700">Restaurant Dashboard</Link>
+                <Link href="/restaurant" className="text-sm font-semibold text-gold-700">Restaurant Dashboard</Link>
               )}
               {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
                 <Link href="/admin" className="text-sm font-semibold text-gold-700">Admin Panel</Link>
@@ -70,7 +71,9 @@ export function SiteHeader() {
           )}
         </div>
 
-        <button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Menu">☰</button>
+        <button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Menu">
+          <Menu className="w-6 h-6 text-temple-700" />
+        </button>
       </div>
       {open && (
         <div className="border-t border-temple-100 bg-white px-4 py-3 md:hidden">

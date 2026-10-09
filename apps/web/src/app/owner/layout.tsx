@@ -4,14 +4,15 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { api, getToken } from '@/lib/api';
+import { BarChart, Receipt, CalendarRange, Bed, Building, Star } from 'lucide-react';
 
 const NAV = [
-  { href: '/owner', label: 'Dashboard', icon: '📊' },
-  { href: '/owner/bookings', label: 'Bookings', icon: '🧾' },
-  { href: '/owner/availability', label: 'Availability', icon: '🗓️' },
-  { href: '/owner/rooms', label: 'Rooms & Pricing', icon: '🛏️' },
-  { href: '/owner/profile', label: 'Hotel Profile', icon: '🏨' },
-  { href: '/owner/reviews', label: 'Reviews', icon: '⭐' },
+  { href: '/owner', label: 'Dashboard', icon: <BarChart className="w-4 h-4" /> },
+  { href: '/owner/bookings', label: 'Bookings', icon: <Receipt className="w-4 h-4" /> },
+  { href: '/owner/availability', label: 'Availability', icon: <CalendarRange className="w-4 h-4" /> },
+  { href: '/owner/rooms', label: 'Rooms & Pricing', icon: <Bed className="w-4 h-4" /> },
+  { href: '/owner/profile', label: 'Hotel Profile', icon: <Building className="w-4 h-4" /> },
+  { href: '/owner/reviews', label: 'Reviews', icon: <Star className="w-4 h-4" /> },
 ];
 
 export default function OwnerLayout({ children }: { children: ReactNode }) {

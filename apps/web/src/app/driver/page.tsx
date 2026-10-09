@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
-
 import { Suspense, useEffect, useState } from 'react';
+import { AlertTriangle, Car, Wallet } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatINR, fmtDate } from '@/lib/format';
 
@@ -44,9 +44,12 @@ function Dash() {
   return (
     <div>
       {d.driver.status !== 'APPROVED' && (
-        <div className="card mb-6 border-red-300 bg-red-50 p-4 text-sm text-red-700">
-          ⚠️ <strong>Account not active!</strong> Your driver profile is currently {d.driver.status}. 
-          You cannot go online or accept rides until an admin approves your profile.
+        <div className="card mb-6 border-red-300 bg-red-50 p-4 text-sm text-red-700 flex items-start gap-2">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <div>
+            <strong>Account not active!</strong> Your driver profile is currently {d.driver.status}. 
+            You cannot go online or accept rides until an admin approves your profile.
+          </div>
         </div>
       )}
 
@@ -97,11 +100,11 @@ function Dash() {
 
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-2">
         {[
-          ['Completed Rides', String(d.stats.completed), '🚕'],
-          ['Total Earnings', formatINR(d.stats.revenuePaise), '💰'],
-        ].map(([label, value, icon]) => (
+          { label: 'Completed Rides', value: String(d.stats.completed), icon: <Car className="w-6 h-6 text-temple-600" /> },
+          { label: 'Total Earnings', value: formatINR(d.stats.revenuePaise), icon: <Wallet className="w-6 h-6 text-temple-600" /> },
+        ].map(({ label, value, icon }) => (
           <div key={label} className="card p-4">
-            <div className="text-xl">{icon}</div>
+            <div className="mb-2">{icon}</div>
             <div className="mt-1 text-xl font-bold text-temple-700">{value}</div>
             <div className="text-[11px] uppercase tracking-wide text-temple-400">{label}</div>
           </div>
