@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma, type Prisma } from '@gsv/database';
 import { asyncH, ApiError } from '../lib/errors.js';
 import { requireAuth } from '../middleware/requireAuth.js';
+import { uploadMiddleware, saveImage } from '../lib/uploads.js';
 
 export const ridesRouter = Router();
 
@@ -130,7 +131,7 @@ ridesRouter.patch('/:id/status', requireAuth, asyncH(async (req, res) => {
 ridesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
   const driver = await prisma.driver.findUnique({
     where: { userId: req.auth!.id },
-    include: { vehicle: true }
+    include: { vehicle: true, documents: true }
   });
   if (!driver) throw ApiError.forbidden('Not registered as driver');
 
@@ -168,4 +169,31 @@ ridesRouter.patch('/online', requireAuth, asyncH(async (req, res) => {
     data: { isOnline }
   });
   res.json({ isOnline: driver.isOnline });
+}));
+
+// POST /api/rides/documents - Upload driver documents
+ridesRouter.post('/documents', requireAuth, uploadMiddleware([{ name: 'document', maxCount: 1 }]), asyncH(async (req, res) => {
+  const driver = await prisma.driver.findUnique({ where: { userId: req.auth!.id } });
+  if (!driver) throw ApiError.forbidden('Not registered as driver');
+
+  const docType = req.body.docType as any;
+  if (!['DRIVING_LICENSE', 'VEHICLE_RC', 'INSURANCE', 'PUC'].includes(docType)) {
+    throw ApiError.badRequest('Invalid docType');
+  }
+
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const file = files.document?.[0];
+  if (!file) throw ApiError.badRequest('File missing');
+
+  const privateUrl = await saveImage(file, 'drivers');
+
+  const doc = await prisma.driverDocument.create({
+    data: {
+      driverId: driver.id,
+      docType,
+      privateUrl,
+      status: 'PENDING'
+    }
+  });
+  res.json({ data: doc });
 }));

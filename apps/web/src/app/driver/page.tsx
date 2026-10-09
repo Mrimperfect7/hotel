@@ -1,12 +1,12 @@
 'use client';
 import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
-import { AlertTriangle, Car, Wallet } from 'lucide-react';
+import { Suspense, useEffect, useState, useRef } from 'react';
+import { AlertTriangle, Car, Wallet, UploadCloud, CheckCircle } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatINR, fmtDate } from '@/lib/format';
 
 type Dash = {
-  driver: { name: string; status: string; isOnline: boolean };
+  driver: { name: string; status: string; isOnline: boolean; documents: Array<{ id: string; docType: string; status: string }> };
   stats: { completed: number; revenuePaise: number };
   activeRide: { id: string; pickupLocation: string; destination: string; status: string; customer: { name: string; phone: string } } | null;
   availableRides: Array<{ id: string; date: string; pickupLocation: string; destination: string; status: string; estimatedPaise: number | null; customer: { name: string; phone: string } }>;
@@ -16,6 +16,8 @@ type Dash = {
 function Dash() {
   const [d, setD] = useState<Dash | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = () => {
     api.get<Dash>('/api/rides/dashboard', true).then(setD).catch(() => {});
@@ -39,6 +41,34 @@ function Dash() {
     load();
   }
 
+  const handleUploadClick = (docType: string) => {
+    setUploadingDoc(docType);
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingDoc) return;
+    
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('docType', uploadingDoc);
+
+    try {
+      await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/rides/documents', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: formData
+      });
+      load();
+    } catch (err) {
+      alert('Upload failed.');
+    } finally {
+      setUploadingDoc(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   if (!d) return <div className="card h-48 animate-pulse bg-temple-50" />;
 
   return (
@@ -48,10 +78,13 @@ function Dash() {
           <AlertTriangle className="w-5 h-5 shrink-0" />
           <div>
             <strong>Account not active!</strong> Your driver profile is currently {d.driver.status}. 
-            You cannot go online or accept rides until an admin approves your profile.
+            You cannot go online or accept rides until an admin approves your profile. Please ensure all mandatory documents are uploaded.
           </div>
         </div>
       )}
+
+      {/* Hidden file input */}
+      <input type="file" ref={fileInputRef} className="hidden" accept="image/jpeg, image/png, image/webp" onChange={handleFileChange} />
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -109,6 +142,40 @@ function Dash() {
             <div className="text-[11px] uppercase tracking-wide text-temple-400">{label}</div>
           </div>
         ))}
+      </div>
+
+      <div className="card mt-6 p-5">
+        <h2 className="font-bold text-temple-700 mb-4">Verification Documents</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[
+            { id: 'DRIVING_LICENSE', label: 'Driving License' },
+            { id: 'VEHICLE_RC', label: 'Vehicle RC' },
+            { id: 'INSURANCE', label: 'Insurance' }
+          ].map(docType => {
+            const doc = d.driver.documents?.find(x => x.docType === docType.id);
+            return (
+              <div key={docType.id} className="flex items-center justify-between p-4 border border-temple-100 rounded-lg bg-temple-50">
+                <div>
+                  <h3 className="font-semibold text-sm text-temple-800">{docType.label}</h3>
+                  <p className="text-xs mt-1 text-temple-500">
+                    {doc ? `Status: ${doc.status}` : 'Not uploaded'}
+                  </p>
+                </div>
+                {doc ? (
+                  doc.status === 'VERIFIED' ? (
+                    <CheckCircle className="w-6 h-6 text-green-500" />
+                  ) : (
+                    <span className="badge bg-gold-100 text-gold-800">Pending</span>
+                  )
+                ) : (
+                  <button onClick={() => handleUploadClick(docType.id)} className="btn-outline text-xs px-3 py-1 flex items-center gap-1">
+                    <UploadCloud className="w-3 h-3" /> Upload
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
