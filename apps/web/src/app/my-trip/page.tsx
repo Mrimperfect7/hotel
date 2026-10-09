@@ -10,9 +10,11 @@ type TripItem = {
   dateTime: string;
   title: string;
   subtitle: string;
+  entityId?: string;
 };
 
 type TripData = {
+  id: string;
   name: string;
   tripCode?: string;
   items: TripItem[];

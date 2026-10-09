@@ -20,7 +20,7 @@ export default function RidesPage() {
     setRideState('SEARCHING');
 
     try {
-      const res = await api.post('/api/rides/request', {
+      const res = await api.post<{ data?: { driverId?: string } }>('/api/rides/request', {
         pickupLocation: pickup,
         destination,
         date: new Date().toISOString().split('T')[0],
