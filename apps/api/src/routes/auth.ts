@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { prisma } from '@gsv/database';
 import { asyncH, ApiError } from '../lib/errors.js';
 import {
@@ -210,6 +211,46 @@ authRouter.get(
       },
     });
     if (!user) throw ApiError.notFound('User not found');
+    res.json({ user });
+  })
+);
+
+/** PATCH /api/auth/me — update user profile */
+authRouter.patch(
+  '/me',
+  requireAuth,
+  asyncH(async (req, res) => {
+    const schema = z.object({
+      name: z.string().min(2).optional(),
+      phone: z.string().min(6).optional(),
+      preferredLang: z.string().optional(),
+      seniorFriendly: z.boolean().optional(),
+    });
+    const data = schema.parse(req.body);
+
+    const user = await prisma.user.update({
+      where: { id: req.auth!.id },
+      data: {
+        ...(data.name ? { name: data.name } : {}),
+        ...(data.phone ? { phone: data.phone } : {}),
+        customerProfile: data.preferredLang || data.seniorFriendly !== undefined
+          ? {
+              upsert: {
+                create: {
+                  preferredLang: data.preferredLang || 'en',
+                  seniorFriendly: data.seniorFriendly || false,
+                },
+                update: {
+                  ...(data.preferredLang ? { preferredLang: data.preferredLang } : {}),
+                  ...(data.seniorFriendly !== undefined ? { seniorFriendly: data.seniorFriendly } : {}),
+                }
+              }
+            }
+          : undefined
+      },
+      select: { id: true, name: true, email: true, phone: true, role: true }
+    });
+
     res.json({ user });
   })
 );

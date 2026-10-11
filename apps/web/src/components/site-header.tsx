@@ -52,6 +52,9 @@ export function SiteHeader() {
               {(user.role === 'RESTAURANT_OWNER') && (
                 <Link href="/restaurant" className="text-sm font-semibold text-gold-700">Restaurant Dashboard</Link>
               )}
+              {(user.role === 'CUSTOMER' || !user.role) && (
+                <Link href="/customer" className="text-sm font-semibold text-gold-700">Customer Dashboard</Link>
+              )}
               {(user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
                 <Link href="/admin" className="text-sm font-semibold text-gold-700">Admin Panel</Link>
               )}
@@ -84,7 +87,24 @@ export function SiteHeader() {
             <Link href="/food">Food</Link>
             <Link href="/list-your-service">Partner With Us</Link>
             <Link href="/my-trip">My Trip</Link>
-            <Link href="/login" className="btn-primary">Sign in</Link>
+            {user ? (
+              <>
+                {user.role === 'CUSTOMER' && <Link href="/customer" className="font-semibold text-gold-700">Customer Dashboard</Link>}
+                {user.role === 'DRIVER' && <Link href="/driver" className="font-semibold text-gold-700">Driver Dashboard</Link>}
+                {user.role === 'GUIDE' && <Link href="/guide" className="font-semibold text-gold-700">Guide Dashboard</Link>}
+                {user.role === 'HOTEL_OWNER' && <Link href="/owner" className="font-semibold text-gold-700">Owner Dashboard</Link>}
+                {user.role === 'RESTAURANT_OWNER' && <Link href="/restaurant" className="font-semibold text-gold-700">Restaurant Dashboard</Link>}
+                {['ADMIN', 'SUPER_ADMIN'].includes(user.role) && <Link href="/admin" className="font-semibold text-gold-700">Admin Panel</Link>}
+                <button
+                  onClick={() => { clearTokens(); setUser(null); window.location.href = '/'; }}
+                  className="text-left text-sm text-red-600 font-medium"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <Link href="/login" className="btn-primary">Sign in</Link>
+            )}
           </div>
         </div>
       )}

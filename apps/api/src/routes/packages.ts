@@ -73,7 +73,7 @@ packagesRouter.post('/:id/book', requireAuth, asyncH(async (req, res) => {
   });
 
   // Generate trip items based on package inclusions
-  const tripItems = pkg.items.map((item, index) => ({
+  const tripItems = pkg.items.map((item: any, index: number) => ({
     tripId: trip.id,
     type: item.serviceType as any, // HOTEL, RIDE, GUIDE, FOOD, etc
     entityId: booking.id, // Using booking ID as a proxy for the actual service booking for now

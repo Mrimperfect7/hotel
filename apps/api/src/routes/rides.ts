@@ -157,8 +157,79 @@ ridesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
     stats: { completed, revenuePaise },
     activeRide: activeRide || null,
     availableRides,
-    recentRides: rides.slice(0, 10)
+    recentRides: rides.slice(0, 10),
+    allRides: rides
   });
+}));
+
+// GET /api/rides/profile - Get driver profile
+ridesRouter.get('/profile', requireAuth, asyncH(async (req, res) => {
+  const driver = await prisma.driver.findUnique({
+    where: { userId: req.auth!.id },
+    include: { vehicle: true, documents: true }
+  });
+  if (!driver) throw ApiError.forbidden('Not registered as driver');
+  res.json({ driver });
+}));
+
+// PATCH /api/rides/profile - Update driver profile and vehicle
+ridesRouter.patch('/profile', requireAuth, asyncH(async (req, res) => {
+  const schema = z.object({
+    phone: z.string().optional(),
+    licenseNumber: z.string().optional(),
+    serviceArea: z.string().optional(),
+    vehicleType: z.string().optional(),
+    vehicleNumber: z.string().optional(),
+    vehicleModel: z.string().optional(),
+  });
+  const data = schema.parse(req.body);
+
+  const driver = await prisma.driver.findUnique({
+    where: { userId: req.auth!.id },
+    include: { vehicle: true }
+  });
+  if (!driver) throw ApiError.forbidden('Not registered as driver');
+
+  const updatedDriver = await prisma.driver.update({
+    where: { id: driver.id },
+    data: {
+      phone: data.phone ?? driver.phone,
+      licenseNumber: data.licenseNumber ?? driver.licenseNumber,
+      serviceArea: data.serviceArea ?? driver.serviceArea,
+      vehicle: data.vehicleType || data.vehicleNumber || data.vehicleModel
+        ? {
+            upsert: {
+              create: {
+                type: data.vehicleType || driver.vehicle?.type || 'Auto',
+                number: data.vehicleNumber || driver.vehicle?.number || 'KL-46-XXXX',
+                model: data.vehicleModel || driver.vehicle?.model
+              },
+              update: {
+                ...(data.vehicleType ? { type: data.vehicleType } : {}),
+                ...(data.vehicleNumber ? { number: data.vehicleNumber } : {}),
+                ...(data.vehicleModel ? { model: data.vehicleModel } : {}),
+              }
+            }
+          }
+        : undefined
+    },
+    include: { vehicle: true, documents: true }
+  });
+
+  res.json({ driver: updatedDriver });
+}));
+
+// GET /api/rides/:id - Get ride details
+ridesRouter.get('/:id', requireAuth, asyncH(async (req, res) => {
+  const ride = await prisma.ride.findUnique({
+    where: { id: req.params.id },
+    include: {
+      customer: { select: { name: true, phone: true } },
+      driver: { include: { vehicle: true } }
+    }
+  });
+  if (!ride) throw ApiError.notFound('Ride not found');
+  res.json({ data: ride });
 }));
 
 // PATCH /api/rides/online - Toggle online status

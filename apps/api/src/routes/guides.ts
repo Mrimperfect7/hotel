@@ -122,6 +122,76 @@ guidesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
   });
 }));
 
+// GET /api/guides/bookings - List all bookings for guide
+guidesRouter.get('/bookings', requireAuth, asyncH(async (req, res) => {
+  const guide = await prisma.guide.findUnique({ where: { userId: req.auth!.id } });
+  if (!guide) throw ApiError.forbidden('Not a guide');
+
+  const bookings = await prisma.guideBooking.findMany({
+    where: { guideId: guide.id },
+    include: { customer: { select: { name: true, phone: true } } },
+    orderBy: { date: 'desc' }
+  });
+  res.json({ bookings, data: bookings });
+}));
+
+// GET /api/guides/bookings/:id - Get specific guide booking
+guidesRouter.get('/bookings/:id', requireAuth, asyncH(async (req, res) => {
+  const booking = await prisma.guideBooking.findUnique({
+    where: { id: req.params.id },
+    include: {
+      guide: true,
+      customer: { select: { name: true, phone: true } }
+    }
+  });
+  if (!booking) throw ApiError.notFound('Booking not found');
+  res.json({ data: booking, booking });
+}));
+
+// GET /api/guides/profile - Get guide profile
+guidesRouter.get('/profile', requireAuth, asyncH(async (req, res) => {
+  const guide = await prisma.guide.findUnique({ where: { userId: req.auth!.id } });
+  if (!guide) throw ApiError.forbidden('Not a guide');
+  res.json({ guide });
+}));
+
+// PATCH /api/guides/profile - Update guide profile
+guidesRouter.patch('/profile', requireAuth, asyncH(async (req, res) => {
+  const schema = z.object({
+    phone: z.string().optional(),
+    languages: z.array(z.string()).optional(),
+    experienceYears: z.number().int().min(0).optional(),
+    specialization: z.string().optional(),
+    description: z.string().optional(),
+    serviceArea: z.string().optional(),
+    hourlyPricePaise: z.number().int().min(0).optional(),
+    halfDayPricePaise: z.number().int().min(0).optional(),
+    fullDayPricePaise: z.number().int().min(0).optional(),
+    upiId: z.string().optional(),
+  });
+  const data = schema.parse(req.body);
+
+  const guide = await prisma.guide.findUnique({ where: { userId: req.auth!.id } });
+  if (!guide) throw ApiError.forbidden('Not a guide');
+
+  const updatedGuide = await prisma.guide.update({
+    where: { id: guide.id },
+    data: {
+      phone: data.phone ?? guide.phone,
+      languages: data.languages ?? guide.languages,
+      experienceYears: data.experienceYears ?? guide.experienceYears,
+      specialization: data.specialization ?? guide.specialization,
+      description: data.description ?? guide.description,
+      serviceArea: data.serviceArea ?? guide.serviceArea,
+      hourlyPricePaise: data.hourlyPricePaise ?? guide.hourlyPricePaise,
+      halfDayPricePaise: data.halfDayPricePaise ?? guide.halfDayPricePaise,
+      fullDayPricePaise: data.fullDayPricePaise ?? guide.fullDayPricePaise,
+      upiId: data.upiId ?? guide.upiId,
+    }
+  });
+  res.json({ guide: updatedGuide });
+}));
+
 // PATCH /api/guides/bookings/:id - Accept/Reject booking
 guidesRouter.patch('/bookings/:id', requireAuth, asyncH(async (req, res) => {
   const schema = z.object({
