@@ -3,17 +3,22 @@ import { z } from 'zod';
 import { prisma, type Prisma } from '@gsv/database';
 import { asyncH, ApiError } from '../lib/errors.js';
 import { requireAuth } from '../middleware/requireAuth.js';
+import { cacheMiddleware } from '../lib/redis.js';
 
 export const foodRouter = Router();
 
-// GET /api/food/restaurants - List approved restaurants
-foodRouter.get('/restaurants', asyncH(async (req, res) => {
-  const restaurants = await prisma.restaurant.findMany({
-    where: { status: 'APPROVED' },
-    include: { menuCategories: { include: { items: true } } }
-  });
-  res.json({ data: restaurants });
-}));
+// GET /api/food/restaurants - List approved restaurants (Redis cached)
+foodRouter.get(
+  '/restaurants',
+  cacheMiddleware({ ttlSeconds: 60, prefix: 'cache:food:restaurants' }),
+  asyncH(async (req, res) => {
+    const restaurants = await prisma.restaurant.findMany({
+      where: { status: 'APPROVED' },
+      include: { menuCategories: { include: { items: true } } }
+    });
+    res.json({ data: restaurants });
+  })
+);
 
 // POST /api/food/restaurants/register - Register restaurant
 foodRouter.post('/restaurants/register', requireAuth, asyncH(async (req, res) => {

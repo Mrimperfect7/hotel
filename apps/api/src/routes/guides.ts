@@ -3,27 +3,36 @@ import { z } from 'zod';
 import { prisma, type Prisma } from '@gsv/database';
 import { asyncH, ApiError } from '../lib/errors.js';
 import { requireAuth } from '../middleware/requireAuth.js';
+import { cacheMiddleware, clearCachePattern } from '../lib/redis.js';
 
 export const guidesRouter = Router();
 
-// GET /api/guides - List approved guides
-guidesRouter.get('/', asyncH(async (req, res) => {
-  const guides = await prisma.guide.findMany({
-    where: { status: 'APPROVED', deletedAt: null },
-    include: { user: { select: { name: true, avatarUrl: true } } }
-  });
-  res.json({ data: guides });
-}));
+// GET /api/guides - List approved guides (Redis cached)
+guidesRouter.get(
+  '/',
+  cacheMiddleware({ ttlSeconds: 60, prefix: 'cache:guides:list' }),
+  asyncH(async (req, res) => {
+    const guides = await prisma.guide.findMany({
+      where: { status: 'APPROVED', deletedAt: null },
+      include: { user: { select: { name: true, avatarUrl: true } } }
+    });
+    res.json({ data: guides });
+  })
+);
 
-// GET /api/guides/:id - Get specific guide
-guidesRouter.get('/:id', asyncH(async (req, res) => {
-  const guide = await prisma.guide.findUnique({
-    where: { id: req.params.id },
-    include: { user: { select: { name: true, avatarUrl: true } }, availabilities: true }
-  });
-  if (!guide || guide.status !== 'APPROVED') throw ApiError.notFound('Guide not found');
-  res.json({ data: guide });
-}));
+// GET /api/guides/:id - Get specific guide (Redis cached)
+guidesRouter.get(
+  '/:id',
+  cacheMiddleware({ ttlSeconds: 60, prefix: 'cache:guides:item', keyGenerator: (req) => req.params.id }),
+  asyncH(async (req, res) => {
+    const guide = await prisma.guide.findUnique({
+      where: { id: req.params.id },
+      include: { user: { select: { name: true, avatarUrl: true } }, availabilities: true }
+    });
+    if (!guide || guide.status !== 'APPROVED') throw ApiError.notFound('Guide not found');
+    res.json({ data: guide });
+  })
+);
 
 // POST /api/guides/register - Register as a guide
 guidesRouter.post('/register', requireAuth, asyncH(async (req, res) => {

@@ -70,6 +70,7 @@ export const config = (() => {
   webOrigin: env('WEB_ORIGIN', 'http://localhost:3000')!,
   apiOrigin: env('API_ORIGIN', 'http://localhost:4000')!,
   databaseUrl: env('DATABASE_URL'),
+  redisUrl: env('REDIS_URL'),
   jwtSecret: env('JWT_SECRET', 'dev-only-jwt-secret-change-me')!,
   refreshSecret: env('REFRESH_TOKEN_SECRET', 'dev-only-refresh-secret-change-me')!,
   jwtAccessTtl: env('JWT_ACCESS_TTL', '15m')!,

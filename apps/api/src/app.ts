@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import hpp from 'hpp';
 import rateLimit from 'express-rate-limit';
 import { config } from '@gsv/config';
+import { getRateLimitStore } from './lib/redis.js';
 
 export function buildApp() {
   const app = express();
@@ -46,6 +47,7 @@ export function buildApp() {
       standardHeaders: 'draft-7',
       legacyHeaders: false,
       message: { error: 'TOO_MANY_REQUESTS', message: 'Too many requests, slow down.' },
+      store: getRateLimitStore('rl:global:'),
     })
   );
 

@@ -6,12 +6,14 @@ import { asyncH, ApiError } from '../lib/errors.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { searchSchema, slugify, TEMPLE_DISTANCE_BANDS, rupeesToPaise } from '@gsv/types';
 import { templeDistanceMeters } from '../lib/geo.js';
+import { cacheMiddleware, clearCachePattern } from '../lib/redis.js';
 
 export const hotelsRouter = Router();
 
-/** GET /api/hotels — public search & discovery with temple-centric filters. */
+/** GET /api/hotels — public search & discovery with temple-centric filters (Redis cached). */
 hotelsRouter.get(
   '/',
+  cacheMiddleware({ ttlSeconds: 60, prefix: 'cache:hotels:list' }),
   asyncH(async (req, res) => {
     const q = searchSchema.parse(req.query);
     const where: Prisma.HotelWhereInput = { status: 'APPROVED', deletedAt: null };
@@ -81,18 +83,20 @@ hotelsRouter.get(
   })
 );
 
-/** GET /api/hotels/meta/filters — amenity keys + distance bands for the UI. */
+/** GET /api/hotels/meta/filters — amenity keys + distance bands for the UI (Redis cached). */
 hotelsRouter.get(
   '/meta/filters',
+  cacheMiddleware({ ttlSeconds: 300, prefix: 'cache:hotels:filters' }),
   asyncH(async (_req, res) => {
     const amenities = await prisma.amenity.findMany({ orderBy: { sortOrder: 'asc' } });
     res.json({ amenities, bands: TEMPLE_DISTANCE_BANDS });
   })
 );
 
-/** GET /api/hotels/:slug — full detail for the premium hotel page. */
+/** GET /api/hotels/:slug — full detail for the premium hotel page (Redis cached). */
 hotelsRouter.get(
   '/:slug',
+  cacheMiddleware({ ttlSeconds: 120, prefix: 'cache:hotels:slug', keyGenerator: (req) => req.params.slug }),
   asyncH(async (req, res) => {
     const hotel = await prisma.hotel.findFirst({
       where: { slug: req.params.slug, status: 'APPROVED', deletedAt: null },
@@ -288,6 +292,7 @@ hotelsRouter.post(
     // Denormalize min price for search sort/filter.
     const min = Math.min(...hotel.roomTypes.map((r) => r.basePricePaise));
     await prisma.hotel.update({ where: { id: hotel.id }, data: { minPricePaise: min } });
+    clearCachePattern('cache:hotels').catch(() => {});
 
     res.status(201).json({ hotelId: hotel.id, status: 'PENDING', message: 'Your property is currently under admin verification.' });
   })
