@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { api, getToken } from '@/lib/api';
+import { api, getToken, getUserFromToken } from '@/lib/api';
 
 const NAV = [
   { href: '/driver', label: 'Dashboard', icon: '🚕' },
@@ -17,6 +17,11 @@ export default function DriverLayout({ children }: { children: ReactNode }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    const user = getUserFromToken();
+    if (user && ['DRIVER', 'ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
+      setChecked(true);
+      return;
+    }
     if (!getToken()) { router.replace('/login?next=/driver'); return; }
     api.get<{ user: { role: string } }>('/api/auth/me', true)
       .then((r) => {
@@ -29,7 +34,7 @@ export default function DriverLayout({ children }: { children: ReactNode }) {
       .catch(() => router.replace('/login?next=/driver'));
   }, [router]);
 
-  if (!checked) return <div className="p-10 text-center text-temple-400">Checking access…</div>;
+  if (!checked) return <div className="card h-64 animate-pulse bg-temple-50/50 m-6" />;
 
   return (
     <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">

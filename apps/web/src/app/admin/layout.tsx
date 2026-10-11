@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { api, getToken } from '@/lib/api';
+import { api, getToken, getUserFromToken } from '@/lib/api';
 import { TrendingUp, Clock, Building, UserCheck, Car, Utensils, Receipt, Users, Star, Settings, Lock, Smartphone, ShieldCheck } from 'lucide-react';
 
 const NAV = [
@@ -27,6 +27,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    const user = getUserFromToken();
+    if (user && ['ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
+      setChecked(true);
+      return;
+    }
     if (!getToken()) { router.replace('/login?next=/admin'); return; }
     api.get<{ user: { role: string } }>('/api/auth/me', true)
       .then((r) => {

@@ -7,12 +7,18 @@ export const tripsRouter = Router();
 
 // GET /api/trips/me - Get unified trip timeline
 tripsRouter.get('/me', requireAuth, asyncH(async (req, res) => {
-  // Find customer's trip (or create one)
-  let trip = await prisma.trip.findFirst({
-    where: { customerId: req.auth!.id },
-    include: { items: { orderBy: { dateTime: 'asc' } } }
-  });
+  const [existingTrip, legacyBookings] = await Promise.all([
+    prisma.trip.findFirst({
+      where: { customerId: req.auth!.id },
+      include: { items: { orderBy: { dateTime: 'asc' } } }
+    }),
+    prisma.booking.findMany({
+      where: { customerId: req.auth!.id, status: { in: ['CONFIRMED', 'PENDING'] } },
+      include: { hotel: true }
+    })
+  ]);
 
+  let trip = existingTrip;
   if (!trip) {
     const tripCode = `NMG-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
     trip = await prisma.trip.create({
@@ -20,12 +26,6 @@ tripsRouter.get('/me', requireAuth, asyncH(async (req, res) => {
       include: { items: true }
     });
   }
-
-  // Also include hotel bookings directly if they aren't synced (legacy compatibility)
-  const legacyBookings = await prisma.booking.findMany({
-    where: { customerId: req.auth!.id, status: { in: ['CONFIRMED', 'PENDING'] } },
-    include: { hotel: true }
-  });
   
   const tripData = {
     ...trip,

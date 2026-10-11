@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { api, getToken } from '@/lib/api';
+import { api, getToken, getUserFromToken } from '@/lib/api';
 import { BarChart, Receipt, CalendarRange, Bed, Building, Star } from 'lucide-react';
 
 const NAV = [
@@ -22,6 +22,12 @@ export default function OwnerLayout({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
+    const user = getUserFromToken();
+    if (user && ['HOTEL_OWNER', 'ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
+      setRole(user.role);
+      setChecked(true);
+      return;
+    }
     if (!getToken()) { router.replace('/login?next=/owner'); return; }
     api.get<{ user: { role: string } }>('/api/auth/me', true)
       .then((r) => {
@@ -35,7 +41,7 @@ export default function OwnerLayout({ children }: { children: ReactNode }) {
       .catch(() => router.replace('/login?next=/owner'));
   }, [router]);
 
-  if (!checked) return <div className="p-10 text-center text-temple-400">Checking access…</div>;
+  if (!checked) return <div className="card h-64 animate-pulse bg-temple-50/50 m-6" />;
 
   return (
     <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">

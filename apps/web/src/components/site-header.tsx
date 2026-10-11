@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { api, getToken, clearTokens } from '@/lib/api';
+import { api, getToken, clearTokens, getUserFromToken } from '@/lib/api';
 import { Menu } from 'lucide-react';
 
 type Me = { user: { name: string; role: string } };
@@ -12,6 +12,10 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    const fastUser = getUserFromToken();
+    if (fastUser) {
+      setUser({ name: fastUser.role, role: fastUser.role });
+    }
     if (!getToken()) return;
     api
       .get<Me>('/api/auth/me', true)

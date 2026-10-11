@@ -34,12 +34,35 @@ ownerRouter.get(
   })
 );
 
+const ownerDashCache = new Map<string, { data: any; expires: number }>();
+
 /** GET /api/owner/dashboard — today's bookings, check-ins/outs, revenue, occupancy, pending. */
 ownerRouter.get(
   '/dashboard',
   asyncH(async (req, res) => {
-    const hotels = await myHotels(req.auth!.id);
+    const userId = req.auth!.id;
+    const cached = ownerDashCache.get(userId);
+    if (cached && Date.now() < cached.expires) {
+      return res.json(cached.data);
+    }
+
+    const hotels = await myHotels(userId);
     const hotelIds = hotels.map((h) => h.id);
+
+    if (hotelIds.length === 0) {
+      const emptyResult = {
+        todayBookings: 0,
+        upcoming: 0,
+        checkInsToday: [],
+        checkOutsToday: 0,
+        pending: 0,
+        cancelled: 0,
+        revenuePaise: 0,
+        totalRooms: 0,
+      };
+      ownerDashCache.set(userId, { data: emptyResult, expires: Date.now() + 15_000 });
+      return res.json(emptyResult);
+    }
 
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     const tomorrowStart = new Date(todayStart); tomorrowStart.setDate(todayStart.getDate() + 1);
@@ -64,7 +87,7 @@ ownerRouter.get(
       }),
     ]);
 
-    res.json({
+    const result = {
       todayBookings, upcoming,
       checkInsToday: checkInsToday.map((b) => ({
         id: b.id, bookingCode: b.bookingCode, guest: b.guestName ?? 'Registered guest',
@@ -74,7 +97,10 @@ ownerRouter.get(
       pending, cancelled,
       revenuePaise: revenueAgg._sum.ownerPayoutPaise ?? 0,
       totalRooms: roomsAgg._sum.totalRooms ?? 0,
-    });
+    };
+
+    ownerDashCache.set(userId, { data: result, expires: Date.now() + 15_000 });
+    res.json(result);
   })
 );
 

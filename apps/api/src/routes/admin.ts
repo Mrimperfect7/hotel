@@ -11,10 +11,16 @@ export const adminRouter = Router();
 
 adminRouter.use(requireAuth, requireAdmin);
 
+let adminStatsCache: { data: any; expires: number } | null = null;
+
 /** GET /api/admin/stats — platform-wide KPIs for the admin dashboard. */
 adminRouter.get(
   '/stats',
   asyncH(async (_req, res) => {
+    if (adminStatsCache && Date.now() < adminStatsCache.expires) {
+      return res.json(adminStatsCache.data);
+    }
+
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
 
     const [totalHotels, pendingHotels, approvedHotels, rejectedHotels, suspendedHotels, totalCustomers, totalOwners, totalBookings, todaysBookings, upcomingCheckins, cancelledBookings, revenueAgg, commissionAgg] = await Promise.all([
@@ -33,13 +39,16 @@ adminRouter.get(
       prisma.booking.aggregate({ where: { status: { in: ['CONFIRMED', 'COMPLETED'] } }, _sum: { commissionPaise: true } }),
     ]);
 
-    res.json({
+    const result = {
       hotels: { total: totalHotels, pending: pendingHotels, approved: approvedHotels, rejected: rejectedHotels, suspended: suspendedHotels },
       users: { customers: totalCustomers, owners: totalOwners },
       bookings: { total: totalBookings, today: todaysBookings, upcomingCheckins, cancelled: cancelledBookings },
       revenuePaise: revenueAgg._sum.amountPaise ?? 0,
       commissionPaise: commissionAgg._sum.commissionPaise ?? 0,
-    });
+    };
+
+    adminStatsCache = { data: result, expires: Date.now() + 20_000 };
+    res.json(result);
   })
 );
 

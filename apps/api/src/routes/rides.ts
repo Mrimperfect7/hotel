@@ -135,18 +135,20 @@ ridesRouter.get('/dashboard', requireAuth, asyncH(async (req, res) => {
   });
   if (!driver) throw ApiError.forbidden('Not registered as driver');
 
-  const rides = await prisma.ride.findMany({
-    where: { driverId: driver.id },
-    include: { customer: { select: { name: true, phone: true } } },
-    orderBy: { createdAt: 'desc' }
-  });
-
-  const availableRides = await prisma.ride.findMany({
-    where: { status: 'REQUESTED' },
-    include: { customer: { select: { name: true, phone: true } } },
-    orderBy: { createdAt: 'desc' },
-    take: 20
-  });
+  const [rides, availableRides] = await Promise.all([
+    prisma.ride.findMany({
+      where: { driverId: driver.id },
+      include: { customer: { select: { name: true, phone: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 50
+    }),
+    prisma.ride.findMany({
+      where: { status: 'REQUESTED' },
+      include: { customer: { select: { name: true, phone: true } } },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    })
+  ]);
 
   const completed = rides.filter(r => r.status === 'RIDE_COMPLETED').length;
   const revenuePaise = rides.filter(r => r.status === 'RIDE_COMPLETED').reduce((acc, r) => acc + (r.finalPaise || r.estimatedPaise || 0), 0);

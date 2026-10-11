@@ -39,6 +39,38 @@ async function refreshAccessToken(): Promise<boolean> {
   return true;
 }
 
+export type TokenUser = {
+  id: string;
+  role: string;
+  name: string;
+  email: string;
+  phone?: string;
+  exp?: number;
+};
+
+export function getUserFromToken(): TokenUser | null {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const parsed = JSON.parse(jsonPayload);
+    if (parsed.exp && parsed.exp * 1000 < Date.now()) {
+      return null;
+    }
+    return parsed as TokenUser;
+  } catch {
+    return null;
+  }
+}
+
 export class ApiError extends Error {
   code: string;
   status: number;
@@ -46,6 +78,20 @@ export class ApiError extends Error {
     super(message);
     this.status = status;
     this.code = code;
+  }
+}
+
+// In-flight request deduplication & memory cache
+const inFlightRequests = new Map<string, Promise<any>>();
+const memoryCache = new Map<string, { data: any; expiry: number }>();
+
+export function invalidateApiCache(prefix?: string) {
+  if (!prefix) {
+    memoryCache.clear();
+  } else {
+    for (const key of memoryCache.keys()) {
+      if (key.includes(prefix)) memoryCache.delete(key);
+    }
   }
 }
 
@@ -84,11 +130,58 @@ async function request<T>(
 }
 
 export const api = {
-  get: <T>(path: string, auth = false) => request<T>(path, { method: 'GET', auth }),
-  post: <T>(path: string, body?: unknown, auth = false) =>
-    request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined, auth }),
-  patch: <T>(path: string, body?: unknown, auth = false) =>
-    request<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined, auth }),
-  del: <T>(path: string, auth = false) => request<T>(path, { method: 'DELETE', auth }),
-  delete: <T>(path: string, auth = false) => request<T>(path, { method: 'DELETE', auth }),
+  get: <T>(
+    path: string,
+    auth = false,
+    options?: { cacheTtlMs?: number; skipCache?: boolean }
+  ): Promise<T> => {
+    const ttl =
+      options?.cacheTtlMs ??
+      (path.includes('/dashboard') || path.includes('/stats') || path.includes('/me')
+        ? 15000
+        : 0);
+    const cacheKey = `${auth ? 'auth:' : 'pub:'}${path}`;
+
+    if (!options?.skipCache && ttl > 0) {
+      const cached = memoryCache.get(cacheKey);
+      if (cached && cached.expiry > Date.now()) {
+        return Promise.resolve(cached.data as T);
+      }
+    }
+
+    // Deduplicate identical concurrent in-flight requests
+    if (inFlightRequests.has(cacheKey)) {
+      return inFlightRequests.get(cacheKey)! as Promise<T>;
+    }
+
+    const promise = request<T>(path, { method: 'GET', auth })
+      .then((data) => {
+        if (ttl > 0) {
+          memoryCache.set(cacheKey, { data, expiry: Date.now() + ttl });
+        }
+        return data;
+      })
+      .finally(() => {
+        inFlightRequests.delete(cacheKey);
+      });
+
+    inFlightRequests.set(cacheKey, promise);
+    return promise;
+  },
+  post: <T>(path: string, body?: unknown, auth = false) => {
+    invalidateApiCache();
+    return request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined, auth });
+  },
+  patch: <T>(path: string, body?: unknown, auth = false) => {
+    invalidateApiCache();
+    return request<T>(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined, auth });
+  },
+  del: <T>(path: string, auth = false) => {
+    invalidateApiCache();
+    return request<T>(path, { method: 'DELETE', auth });
+  },
+  delete: <T>(path: string, auth = false) => {
+    invalidateApiCache();
+    return request<T>(path, { method: 'DELETE', auth });
+  },
 };

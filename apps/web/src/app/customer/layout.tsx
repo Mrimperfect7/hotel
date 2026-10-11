@@ -36,7 +36,7 @@ export default function CustomerLayout({ children }: { children: ReactNode }) {
   }, [router]);
 
   if (!checked) {
-    return <div className="p-10 text-center text-temple-400">Loading customer portal…</div>;
+    return <div className="card h-64 animate-pulse bg-temple-50/50 m-6" />;
   }
 
   return (

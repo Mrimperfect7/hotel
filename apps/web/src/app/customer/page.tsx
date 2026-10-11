@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api, getUserFromToken } from '@/lib/api';
 import { formatINR, fmtDate, statusTone } from '@/lib/format';
 import {
   Hotel,
@@ -45,7 +45,10 @@ type TripData = {
 };
 
 function CustomerDashboardContent() {
-  const [user, setUser] = useState<UserData | null>(null);
+  const [user, setUser] = useState<UserData | null>(() => {
+    const u = getUserFromToken();
+    return u ? { id: u.id, name: u.name || (u.role === 'CUSTOMER' ? 'Devotee' : u.role), email: u.email || '', phone: u.phone || '', role: u.role } : null;
+  });
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [trip, setTrip] = useState<TripData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,15 +65,6 @@ function CustomerDashboardContent() {
       setLoading(false);
     });
   }, []);
-
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        <div className="card h-28 animate-pulse bg-temple-50" />
-        <div className="card h-56 animate-pulse bg-temple-50" />
-      </div>
-    );
-  }
 
   const upcomingBookings = bookings.filter((b) =>
     ['PENDING', 'CONFIRMED'].includes(b.status)
@@ -103,7 +97,7 @@ function CustomerDashboardContent() {
             <span className="text-xs uppercase font-semibold">Active Bookings</span>
             <Hotel className="w-4 h-4 text-gold-600" />
           </div>
-          <p className="text-2xl font-bold text-temple-800 mt-2">{upcomingBookings.length}</p>
+          <p className="text-2xl font-bold text-temple-800 mt-2">{loading ? '…' : upcomingBookings.length}</p>
         </div>
 
         <div className="card p-4">
@@ -111,7 +105,7 @@ function CustomerDashboardContent() {
             <span className="text-xs uppercase font-semibold">Trip Items</span>
             <MapPin className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-bold text-temple-800 mt-2">{trip?.items?.length || 0}</p>
+          <p className="text-2xl font-bold text-temple-800 mt-2">{loading ? '…' : (trip?.items?.length || 0)}</p>
         </div>
 
         <div className="card p-4">
@@ -194,7 +188,12 @@ function CustomerDashboardContent() {
           </Link>
         </div>
 
-        {upcomingBookings.length === 0 ? (
+        {loading ? (
+          <div className="space-y-2">
+            <div className="h-16 rounded-xl bg-temple-50 animate-pulse" />
+            <div className="h-16 rounded-xl bg-temple-50 animate-pulse" />
+          </div>
+        ) : upcomingBookings.length === 0 ? (
           <div className="text-center py-8 text-temple-400">
             <Hotel className="w-10 h-10 mx-auto text-temple-200 mb-2 stroke-1" />
             <p className="font-medium text-temple-600 text-sm">No upcoming hotel stays.</p>
